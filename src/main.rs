@@ -2,13 +2,16 @@ mod paddle;
 use paddle::Paddle;
 
 mod levels;
-use levels::Level;
+use levels::*;
 
 mod game;
 use game::Game;
 
 mod labels;
 use labels::Label;
+
+mod brick;
+use brick::Brick;
 
 mod ball;
 use ball::Ball;
@@ -21,12 +24,15 @@ use functions::*;
 
 use macroquad::prelude::*;
 
+const FRAME_INDENT:f32 = 25.0;
+
 pub enum GameState {
     Game,
     Pause,
     Intro,
     LevelFail,
     GameOver,
+    InitLevel,
 }
 
 fn window_conf() -> Conf {
@@ -49,11 +55,15 @@ async fn main() {
     let mut game = Game::new().await;
     let mut ball = Ball::new(paddle.center_x(), paddle.y - 16.0).await;
 
+    let mut bricks: Vec<Brick> = Vec::new();
+
     let level_label = Label::new("Level - ".to_string(), 40.0, 787.0, 50).await;
     let lives_label = Label::new("Lives - ".to_string(), 240.0, 787.0, 50).await;
     let score_label = Label::new("Score - ".to_string(), 440.0, 787.0, 50).await;
     
     let resources = Resources::new().await;
+
+    let mut lvl;
 
     loop {
         clear_background(BLACK);
@@ -64,8 +74,43 @@ async fn main() {
 
                 if is_key_pressed(KeyCode::Space) {
                     game.update_game(0, 2);
-                    game_state = GameState::Game;
+                    game_state = GameState::InitLevel;
                 }
+            }
+
+            GameState::InitLevel => {
+                println!("loading...");
+                let mut brick_x: f32 = FRAME_INDENT;
+                let mut brick_y: f32 = 0.0;
+
+                match level.lvl_num {
+                    1 => {
+                        lvl = LVL_1;
+                    }
+                    2 => {
+                        lvl = LVL_2;
+                    }
+                    3 => {
+                        lvl = LVL_3;
+                    }
+                    _ => {
+                        panic!("no such level!")
+                    }
+                }
+
+                for i in 0..lvl.len() {
+                    brick_y = brick_y + 20.0;
+                    for j in lvl[i] {
+                        if j != 0 {
+                            bricks.push(
+                                Brick::new(brick_x, brick_y, j).await,
+                            );
+                        }
+                        brick_x = brick_x + 50.0;
+                    }
+                    brick_x = FRAME_INDENT;
+                }
+                game_state = GameState::Game;
             }
 
             GameState::LevelFail => {
@@ -101,6 +146,7 @@ async fn main() {
                     game.update_game(0, 2);
                     level.lvl_num = 1;
                     game_state = GameState::Game;
+                    bricks.clear();
                     ball.vertical_dir = ball::VerticalDir::Up;
                     paddle.x = screen_width()/2.0;
                     ball.x = paddle.center_x();
@@ -128,6 +174,11 @@ async fn main() {
                 level_label.draw_label(level.number());
                 lives_label.draw_label(game.lives());
                 score_label.draw_label(game.score());
+
+                for brick in &mut bricks {
+                    brick.draw();
+                    //brick.update(get_frame_time());
+                }
                 
                 if is_key_pressed(KeyCode::Escape) {
                     game_state = GameState::Pause;
@@ -147,7 +198,9 @@ async fn main() {
                     paddle.kind = paddle::Kind::Expanded;
                 }
                 if is_key_pressed(KeyCode::Q) {
+                    bricks.clear();
                     level.increase_level().await;
+                    game_state = GameState::InitLevel;
                 }
 
                 match ball.horizontal_dir { 
