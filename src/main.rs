@@ -31,6 +31,7 @@ pub enum GameState {
     Pause,
     Intro,
     LevelFail,
+    LevelCompleted,
     GameOver,
     InitLevel,
 }
@@ -78,6 +79,20 @@ async fn main() {
                 }
             }
 
+            GameState::LevelCompleted => {
+                level.draw();
+                draw_level_completed_text(resources.font);
+                if is_key_pressed(KeyCode::Space) {
+                    level.lvl_num = level.lvl_num + 1;
+                    level.set_level(level.lvl_num).await;
+                    ball.vertical_dir = ball::VerticalDir::Up;
+                    paddle.x = screen_width()/2.0;
+                    ball.x = paddle.center_x();
+                    ball.y = paddle.y - 16.0;
+                    game_state = GameState::InitLevel;
+                }
+            }
+
             GameState::InitLevel => {
                 let mut brick_x: f32 = FRAME_INDENT;
                 let mut brick_y: f32 = 0.0;
@@ -92,11 +107,22 @@ async fn main() {
                     3 => {
                         lvl = LVL_3;
                     }
+                    4 => {
+                        lvl = LVL_4;
+                    }
+                    5 => {
+                        lvl = LVL_5;
+                    }
+                    6 => {
+                        lvl = LVL_6;
+                    }
                     _ => {
                         panic!("no such level!")
                     }
                 }
 
+                level.set_level(level.lvl_num).await;
+                level.bricks_amount = 0;
                 for i in 0..lvl.len() {
                     brick_y = brick_y + 20.0;
                     for j in lvl[i] {
@@ -104,6 +130,7 @@ async fn main() {
                             bricks.push(
                                 Brick::new(brick_x, brick_y, j).await,
                             );
+                            level.bricks_amount = level.bricks_amount + 1;
                         }
                         brick_x = brick_x + 50.0;
                     }
@@ -183,25 +210,33 @@ async fn main() {
                     if !brick.destroyed {
                         if let Some(_i) = ball.rect.intersect(brick.left_side) {
                             brick.destroyed = true;
+                            level.bricks_amount = level.bricks_amount - 1;
                             game.update_game(score+1, lives);
                             ball.horizontal_dir = ball::HorizontalDir::Left;
-                        }
+                        } else 
                         if let Some(_i) = ball.rect.intersect(brick.right_side) {
                             brick.destroyed = true;
+                            level.bricks_amount = level.bricks_amount - 1;
                             game.update_game(score+1, lives);
                             ball.horizontal_dir = ball::HorizontalDir::Right;
-                        }
+                        } else
                         if let Some(_i) = ball.rect.intersect(brick.up_side) {
                             brick.destroyed = true;
+                            level.bricks_amount = level.bricks_amount - 1;
                             game.update_game(score+1, lives);
                             ball.vertical_dir = ball::VerticalDir::Up;
-                        }
+                        } else
                         if let Some(_i) = ball.rect.intersect(brick.down_side) {
                             brick.destroyed = true;
+                            level.bricks_amount = level.bricks_amount - 1;
                             game.update_game(score+1, lives);
                             ball.vertical_dir = ball::VerticalDir::Down;
                         }
                     }
+                }
+
+                if level.bricks_amount < 1 {
+                    game_state = GameState::LevelCompleted;
                 }
                 
                 if is_key_pressed(KeyCode::Escape) {
@@ -223,7 +258,8 @@ async fn main() {
                 }
                 if is_key_pressed(KeyCode::Q) {
                     bricks.clear();
-                    level.increase_level().await;
+                    level.lvl_num = level.lvl_num + 1;
+                    level.set_level(level.lvl_num).await;
                     game_state = GameState::InitLevel;
                 }
 
