@@ -20,6 +20,7 @@ pub struct Ball {
     pub ball_step_move_y: f32,
     pub horizontal_dir: HorizontalDir,
     pub vertical_dir: VerticalDir,
+    pub rect: Rect,
 }
 
 impl Ball {
@@ -32,6 +33,7 @@ impl Ball {
             ball_step_move_y: 5.0,
             horizontal_dir: HorizontalDir::Right,
             vertical_dir: VerticalDir::Up,
+            rect: Rect::new(x, y, 16.0, 16.0),
         }
     }
 
@@ -57,6 +59,10 @@ impl Ball {
                 self.y += y * dt * BALL_SPEED;
             },
         }
+        self.rect.x = self.x;
+        self.rect.y = self.y;
+        self.rect.w = self.texture.width();
+        self.rect.h = self.texture.height();
     }
 
     pub fn center_x(&mut self) -> f32 {

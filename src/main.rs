@@ -79,7 +79,6 @@ async fn main() {
             }
 
             GameState::InitLevel => {
-                println!("loading...");
                 let mut brick_x: f32 = FRAME_INDENT;
                 let mut brick_y: f32 = 0.0;
 
@@ -101,7 +100,7 @@ async fn main() {
                 for i in 0..lvl.len() {
                     brick_y = brick_y + 20.0;
                     for j in lvl[i] {
-                        if j != 0 {
+                        if j != " " {
                             bricks.push(
                                 Brick::new(brick_x, brick_y, j).await,
                             );
@@ -177,7 +176,10 @@ async fn main() {
 
                 for brick in &mut bricks {
                     brick.draw();
-                    //brick.update(get_frame_time());
+
+                    if let Some(_i) = ball.rect.intersect(brick.rect) {
+                        brick.destroyed = true;
+                    }
                 }
                 
                 if is_key_pressed(KeyCode::Escape) {
