@@ -4,7 +4,10 @@ pub struct Brick {
     texture: Texture2D,
     x: f32,
     y: f32,
-    pub rect: Rect,
+    pub left_side: Rect,
+    pub right_side: Rect,
+    pub up_side: Rect,
+    pub down_side: Rect,
     pub destroyed: bool,
 }
 
@@ -15,7 +18,10 @@ impl Brick {
             texture: load_texture(&path).await.unwrap(),
             x,
             y,
-            rect: Rect::new(x, y, 50.0, 20.0),
+            left_side: Rect::new(x, y, 5.0, 20.0),
+            right_side: Rect::new(x+45.0, y, 5.0, 20.0),
+            up_side: Rect::new(x, y, 50.0, 5.0),
+            down_side: Rect::new(x, y+15.0, 50.0, 5.0),
             destroyed: false,
         }
     }

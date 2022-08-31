@@ -144,7 +144,7 @@ async fn main() {
                 if is_key_pressed(KeyCode::Space) {
                     game.update_game(0, 2);
                     level.lvl_num = 1;
-                    game_state = GameState::Game;
+                    game_state = GameState::InitLevel;
                     bricks.clear();
                     ball.vertical_dir = ball::VerticalDir::Up;
                     paddle.x = screen_width()/2.0;
@@ -174,11 +174,33 @@ async fn main() {
                 lives_label.draw_label(game.lives());
                 score_label.draw_label(game.score());
 
+                let score = game.score();
+                let lives = game.lives();
+
                 for brick in &mut bricks {
                     brick.draw();
 
-                    if let Some(_i) = ball.rect.intersect(brick.rect) {
-                        brick.destroyed = true;
+                    if !brick.destroyed {
+                        if let Some(_i) = ball.rect.intersect(brick.left_side) {
+                            brick.destroyed = true;
+                            game.update_game(score+1, lives);
+                            ball.horizontal_dir = ball::HorizontalDir::Left;
+                        }
+                        if let Some(_i) = ball.rect.intersect(brick.right_side) {
+                            brick.destroyed = true;
+                            game.update_game(score+1, lives);
+                            ball.horizontal_dir = ball::HorizontalDir::Right;
+                        }
+                        if let Some(_i) = ball.rect.intersect(brick.up_side) {
+                            brick.destroyed = true;
+                            game.update_game(score+1, lives);
+                            ball.vertical_dir = ball::VerticalDir::Up;
+                        }
+                        if let Some(_i) = ball.rect.intersect(brick.down_side) {
+                            brick.destroyed = true;
+                            game.update_game(score+1, lives);
+                            ball.vertical_dir = ball::VerticalDir::Down;
+                        }
                     }
                 }
                 

@@ -1,6 +1,6 @@
 use macroquad::prelude::*;
 
-const BALL_SPEED: f32 = 70.0;
+const BALL_SPEED: f32 = 100.0;
 
 pub enum HorizontalDir {
     Left,
@@ -33,7 +33,7 @@ impl Ball {
             ball_step_move_y: 5.0,
             horizontal_dir: HorizontalDir::Right,
             vertical_dir: VerticalDir::Up,
-            rect: Rect::new(x, y, 16.0, 16.0),
+            rect: Rect::new(x+4.0, y+4.0, 8.0, 8.0),
         }
     }
 
@@ -59,10 +59,10 @@ impl Ball {
                 self.y += y * dt * BALL_SPEED;
             },
         }
-        self.rect.x = self.x;
-        self.rect.y = self.y;
-        self.rect.w = self.texture.width();
-        self.rect.h = self.texture.height();
+        self.rect.x = self.x+4.0;
+        self.rect.y = self.y+4.0;
+        self.rect.w = 8.0;
+        self.rect.h = 8.0;
     }
 
     pub fn center_x(&mut self) -> f32 {
