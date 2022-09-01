@@ -22,7 +22,7 @@ use resources::Resources;
 mod functions;
 use functions::*;
 
-use macroquad::prelude::*;
+use macroquad::{prelude::*, audio::{play_sound, PlaySoundParams}};
 
 const FRAME_INDENT:f32 = 25.0;
 
@@ -33,6 +33,7 @@ pub enum GameState {
     LevelFail,
     LevelCompleted,
     GameOver,
+    GameCompleted,
     InitLevel,
 }
 
@@ -76,6 +77,16 @@ async fn main() {
                 if is_key_pressed(KeyCode::Space) {
                     game.update_game(0, 2);
                     game_state = GameState::InitLevel;
+                }
+            }
+
+            GameState::GameCompleted => {
+                level.draw();
+                draw_game_completed_text(resources.font);
+
+                if is_key_pressed(KeyCode::Space) {
+                    level.lvl_num = 1;
+                    game_state = GameState::Intro;
                 }
             }
 
@@ -213,30 +224,50 @@ async fn main() {
                             level.bricks_amount = level.bricks_amount - 1;
                             game.update_game(score+1, lives);
                             ball.horizontal_dir = ball::HorizontalDir::Left;
+                            play_sound(resources.destroyed_block, PlaySoundParams {
+                                looped: false,
+                                volume: 3.0,
+                            });
                         } else 
                         if let Some(_i) = ball.rect.intersect(brick.right_side) {
                             brick.destroyed = true;
                             level.bricks_amount = level.bricks_amount - 1;
                             game.update_game(score+1, lives);
                             ball.horizontal_dir = ball::HorizontalDir::Right;
+                            play_sound(resources.destroyed_block, PlaySoundParams {
+                                looped: false,
+                                volume: 3.0,
+                            });
                         } else
                         if let Some(_i) = ball.rect.intersect(brick.up_side) {
                             brick.destroyed = true;
                             level.bricks_amount = level.bricks_amount - 1;
                             game.update_game(score+1, lives);
                             ball.vertical_dir = ball::VerticalDir::Up;
+                            play_sound(resources.destroyed_block, PlaySoundParams {
+                                looped: false,
+                                volume: 3.0,
+                            });
                         } else
                         if let Some(_i) = ball.rect.intersect(brick.down_side) {
                             brick.destroyed = true;
                             level.bricks_amount = level.bricks_amount - 1;
                             game.update_game(score+1, lives);
                             ball.vertical_dir = ball::VerticalDir::Down;
+                            play_sound(resources.destroyed_block, PlaySoundParams {
+                                looped: false,
+                                volume: 3.0,
+                            });
                         }
                     }
                 }
 
                 if level.bricks_amount < 1 {
-                    game_state = GameState::LevelCompleted;
+                    if level.lvl_num == 6 {
+                        game_state = GameState::GameCompleted;
+                    } else {
+                        game_state = GameState::LevelCompleted;
+                    }
                 }
                 
                 if is_key_pressed(KeyCode::Escape) {
@@ -267,11 +298,19 @@ async fn main() {
                     ball::HorizontalDir::Left => {
                         if ball.x < 16.0 {
                             ball.horizontal_dir = ball::HorizontalDir::Right;
+                            play_sound(resources.ball_hit, PlaySoundParams {
+                                looped: false,
+                                volume: 3.0,
+                            });
                         }
                     },
                     ball::HorizontalDir::Right => {
                         if ball.x > screen_width() - 16.0 - ball.ball_width() {
                             ball.horizontal_dir = ball::HorizontalDir::Left;
+                            play_sound(resources.ball_hit, PlaySoundParams {
+                                looped: false,
+                                volume: 3.0,
+                            });
                         }
                     },
                 }
@@ -280,15 +319,27 @@ async fn main() {
                     ball::VerticalDir::Up => {
                         if ball.y < 16.0 {
                             ball.vertical_dir = ball::VerticalDir::Down;
+                            play_sound(resources.ball_hit, PlaySoundParams {
+                                looped: false,
+                                volume: 3.0,
+                            });
                         }
                     },
                     ball::VerticalDir::Down => {
                         if ball.center_x() < paddle.x + paddle.width() && ball.center_x() > paddle.x && ball.y > paddle.y {
                             ball.vertical_dir = ball::VerticalDir::Up;
+                            play_sound(resources.paddle_hit, PlaySoundParams {
+                                looped: false,
+                                volume: 3.0,
+                            });
                         }
 
                         if ball.y + ball.ball_height() > resources.frame_texture.height() {
                             game_state = GameState::LevelFail;
+                            play_sound(resources.ball_lost, PlaySoundParams {
+                                looped: false,
+                                volume: 3.0,
+                            });
                         }
                     },
                 }

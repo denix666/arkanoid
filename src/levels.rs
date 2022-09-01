@@ -147,15 +147,6 @@ impl Level {
         }
     }
 
-    // pub async fn increase_level(&mut self) {
-    //     if self.lvl_num < 6 {
-    //         self.lvl_num += 1;
-    //     }
-
-    //     let path = format!("assets/backgrounds/bg_{}.png",self.lvl_num);
-    //     self.texture = load_texture(&path).await.unwrap();
-    // }
-
     pub async fn set_level(&mut self, level: i32) {
         self.lvl_num = level;
 
