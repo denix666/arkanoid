@@ -16,7 +16,7 @@ jobs:
 
     steps:
     - name: Prep
-      run: apt-get install libasound-dev -y
+      run: sudo apt-get install libasound-dev -y
       
     - uses: actions/checkout@v3
     - name: Build
