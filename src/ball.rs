@@ -1,6 +1,6 @@
 use macroquad::prelude::*;
 
-const BALL_SPEED: f32 = 70.0;
+const BALL_SPEED: f32 = 60.0;
 
 pub enum HorizontalDir {
     Left,

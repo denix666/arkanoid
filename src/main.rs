@@ -343,6 +343,20 @@ async fn main() {
                     ball::VerticalDir::Down => {
                         if ball.center_x() < paddle.x + paddle.width() && ball.center_x() > paddle.x && ball.y > paddle.y {
                             ball.vertical_dir = ball::VerticalDir::Up;
+                            // Left part of paddle
+                            if ball.center_x() >= paddle.x && ball.center_x() <= paddle.x + paddle.width() / 3.0 {
+                                ball.ball_step_move_x = 7.0;
+                                ball.horizontal_dir = ball::HorizontalDir::Left;
+                            }
+                            // Right part of paddle
+                            if ball.center_x() >= paddle.x + paddle.width() / 3.0 * 2.0 && ball.center_x() <= paddle.x + paddle.width() {
+                                ball.ball_step_move_x = 7.0;
+                                ball.horizontal_dir = ball::HorizontalDir::Right;
+                            }
+                            // Center part of paddle
+                            if ball.center_x() >= paddle.x + paddle.width() / 3.0 && ball.center_x() <= paddle.x + paddle.width() - paddle.width() / 3.0 {
+                                ball.ball_step_move_x = 5.0;
+                            }
                             play_sound(resources.paddle_hit, PlaySoundParams {
                                 looped: false,
                                 volume: 3.0,
