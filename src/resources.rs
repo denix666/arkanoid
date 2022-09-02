@@ -9,6 +9,9 @@ pub struct Resources {
     pub paddle_hit: Sound,
     pub ball_lost: Sound,
     pub destroyed_block: Sound,
+    pub level_start: Sound,
+    pub intro_music: Sound,
+    pub game_over: Sound,
 }
 
 impl Resources {
@@ -22,6 +25,9 @@ impl Resources {
             paddle_hit: load_sound("assets/sounds/paddle_hit.ogg").await.unwrap(),
             ball_lost: load_sound("assets/sounds/ball_lost.ogg").await.unwrap(),
             destroyed_block: load_sound("assets/sounds/destroyed_block.ogg").await.unwrap(),
+            level_start: load_sound("assets/sounds/level_start.ogg").await.unwrap(),
+            intro_music: load_sound("assets/sounds/intro.ogg").await.unwrap(),
+            game_over: load_sound("assets/sounds/game_over.ogg").await.unwrap(),
         }
     }
 }

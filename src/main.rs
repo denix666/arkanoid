@@ -22,7 +22,7 @@ use resources::Resources;
 mod functions;
 use functions::*;
 
-use macroquad::{prelude::*, audio::{play_sound, PlaySoundParams}};
+use macroquad::{prelude::*, audio::{play_sound, PlaySoundParams, stop_sound}};
 
 const FRAME_INDENT:f32 = 25.0;
 
@@ -67,16 +67,22 @@ async fn main() {
 
     let mut lvl;
 
+    play_sound(resources.intro_music, PlaySoundParams {
+        looped: true,
+        volume: 3.0,
+    });
+
     loop {
         clear_background(BLACK);
         
         match game_state {
             GameState::Intro => {
                 draw_texture(resources.intro_texture, 0.0, 0.0, WHITE);
-
+                
                 if is_key_pressed(KeyCode::Space) {
                     game.update_game(0, 2);
                     game_state = GameState::InitLevel;
+                    stop_sound(resources.intro_music);
                 }
             }
 
@@ -133,6 +139,7 @@ async fn main() {
                 }
 
                 level.set_level(level.lvl_num).await;
+                paddle.kind = paddle::Kind::Normal;
                 level.bricks_amount = 0;
                 for i in 0..lvl.len() {
                     brick_y = brick_y + 20.0;
@@ -147,6 +154,10 @@ async fn main() {
                     }
                     brick_x = FRAME_INDENT;
                 }
+                play_sound(resources.level_start, PlaySoundParams {
+                    looped: false,
+                    volume: 3.0,
+                });
                 game_state = GameState::Game;
             }
 
@@ -167,6 +178,10 @@ async fn main() {
                         ball.y = paddle.y - 16.0;
                     } else {
                         game_state = GameState::GameOver;
+                        play_sound(resources.game_over, PlaySoundParams {
+                            looped: false,
+                            volume: 3.0,
+                        });
                     }
                 }
 
