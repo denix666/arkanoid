@@ -21,6 +21,9 @@ pub struct Ball {
     pub horizontal_dir: HorizontalDir,
     pub vertical_dir: VerticalDir,
     pub rect: Rect,
+    pub released: bool,
+    pub last_ball_time: f64,
+    pub idle_time: f64,
 }
 
 impl Ball {
@@ -34,6 +37,9 @@ impl Ball {
             horizontal_dir: HorizontalDir::Right,
             vertical_dir: VerticalDir::Up,
             rect: Rect::new(x+4.0, y+4.0, 8.0, 8.0),
+            released: false,
+            last_ball_time: 0.0,
+            idle_time: 3.0,
         }
     }
 
@@ -63,6 +69,8 @@ impl Ball {
         self.rect.y = self.y+4.0;
         self.rect.w = 8.0;
         self.rect.h = 8.0;
+
+        //println!("{}",self.last_ball_time);
     }
 
     pub fn center_x(&mut self) -> f32 {

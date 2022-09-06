@@ -55,7 +55,7 @@ async fn main() {
     let mut level = Level::new().await;
     let mut paddle = Paddle::new().await;
     let mut game = Game::new().await;
-    let mut ball = Ball::new(paddle.center_x(), paddle.y - 16.0).await;
+    let mut ball = Ball::new(paddle.center_x(), paddle.y).await;
 
     let mut bricks: Vec<Brick> = Vec::new();
 
@@ -105,7 +105,7 @@ async fn main() {
                     ball.vertical_dir = ball::VerticalDir::Up;
                     paddle.x = screen_width()/2.0;
                     ball.x = paddle.center_x();
-                    ball.y = paddle.y - 16.0;
+                    ball.y = paddle.y;
                     game_state = GameState::InitLevel;
                 }
             }
@@ -158,6 +158,8 @@ async fn main() {
                     looped: false,
                     volume: 3.0,
                 });
+                ball.last_ball_time = get_time();
+                ball.released = false;
                 game_state = GameState::Game;
             }
 
@@ -175,7 +177,10 @@ async fn main() {
                         ball.vertical_dir = ball::VerticalDir::Up;
                         paddle.x = screen_width()/2.0;
                         ball.x = paddle.center_x();
-                        ball.y = paddle.y - 16.0;
+                        ball.y = paddle.y;
+
+                        ball.last_ball_time = get_time();
+                        ball.released = false;
                     } else {
                         game_state = GameState::GameOver;
                         play_sound(resources.game_over, PlaySoundParams {
@@ -202,7 +207,7 @@ async fn main() {
                     ball.vertical_dir = ball::VerticalDir::Up;
                     paddle.x = screen_width()/2.0;
                     ball.x = paddle.center_x();
-                    ball.y = paddle.y - 16.0;
+                    ball.y = paddle.y;
                 }
             }
 
@@ -217,7 +222,16 @@ async fn main() {
 
             GameState::Game => {
                 paddle.update(get_frame_time());
-                ball.update(get_frame_time());
+                
+                if get_time() - ball.last_ball_time >= ball.idle_time || is_key_pressed(KeyCode::Space) {
+                    ball.released = true;
+                }
+
+                if ball.released {
+                    ball.update(get_frame_time());
+                } else {
+                    ball.x = paddle.center_x();
+                }
 
                 level.draw();
                 draw_texture(resources.frame_texture, 0.0, 0.0, WHITE);
