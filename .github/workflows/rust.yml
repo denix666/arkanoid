@@ -25,7 +25,7 @@ jobs:
     - shell: bash
       run: |
         mv target/release/arkanoid arkanoid
-        chmod 777 ./arkanoid
+        chmod 777 arkanoid
       
     - name: Archive artifacts
       uses: actions/upload-artifact@v3
