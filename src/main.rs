@@ -88,7 +88,7 @@ async fn main() {
 
             GameState::GameCompleted => {
                 level.draw();
-                draw_game_completed_text(resources.font);
+                show_text(resources.font, "Game Completed!", "Press 'space' to restart game...");
 
                 if is_key_pressed(KeyCode::Space) {
                     level.lvl_num = 1;
@@ -98,7 +98,7 @@ async fn main() {
 
             GameState::LevelCompleted => {
                 level.draw();
-                draw_level_completed_text(resources.font);
+                show_text(resources.font, "Level Completed!", "Press 'space' to continue...");
                 if is_key_pressed(KeyCode::Space) {
                     level.lvl_num = level.lvl_num + 1;
                     level.set_level(level.lvl_num).await;
@@ -106,6 +106,7 @@ async fn main() {
                     paddle.x = screen_width()/2.0;
                     ball.x = paddle.center_x();
                     ball.y = paddle.y;
+                    paddle.kind = paddle::Kind::Normal;
                     game_state = GameState::InitLevel;
                 }
             }
@@ -166,7 +167,7 @@ async fn main() {
             GameState::LevelFail => {
                 level.draw();
                 draw_texture(resources.frame_texture, 0.0, 0.0, WHITE);
-                draw_level_failed_text(resources.font);
+                show_text(resources.font, "Level fail", "Press 'space' to continue...");
                 
                 if is_key_pressed(KeyCode::Space) {
                     if game.lives() > 0 {
@@ -178,7 +179,7 @@ async fn main() {
                         paddle.x = screen_width()/2.0;
                         ball.x = paddle.center_x();
                         ball.y = paddle.y;
-
+                        paddle.kind = paddle::Kind::Normal;
                         ball.last_ball_time = get_time();
                         ball.released = false;
                     } else {
@@ -197,7 +198,7 @@ async fn main() {
 
             GameState::GameOver => {
                 level.draw();
-                draw_game_over_text(resources.font);
+                show_text(resources.font, "Game over", "Press 'space' to start new game...");
 
                 if is_key_pressed(KeyCode::Space) {
                     game.update_game(0, 2);
@@ -206,6 +207,7 @@ async fn main() {
                     bricks.clear();
                     ball.vertical_dir = ball::VerticalDir::Up;
                     paddle.x = screen_width()/2.0;
+                    paddle.kind = paddle::Kind::Normal;
                     ball.x = paddle.center_x();
                     ball.y = paddle.y;
                 }
@@ -213,7 +215,7 @@ async fn main() {
 
             GameState::Pause => {
                 level.draw();
-                draw_paused_text(resources.font);
+                show_text(resources.font, "PAUSED", "Press 'space' to continue...");
 
                 if is_key_pressed(KeyCode::Space) | is_key_pressed(KeyCode::Escape) {
                     game_state = GameState::Game;
@@ -375,6 +377,14 @@ async fn main() {
                                 looped: false,
                                 volume: 3.0,
                             });
+                            match paddle.kind {
+                                paddle::Kind::Catch => {
+                                    ball.last_ball_time=get_time();
+                                    ball.released=false;
+                                    ball.y = paddle.y;
+                                }
+                                _ => {},
+                            }
                         }
 
                         if ball.y + ball.ball_height() > resources.frame_texture.height() {

@@ -69,8 +69,6 @@ impl Ball {
         self.rect.y = self.y+4.0;
         self.rect.w = 8.0;
         self.rect.h = 8.0;
-
-        //println!("{}",self.last_ball_time);
     }
 
     pub fn center_x(&mut self) -> f32 {
