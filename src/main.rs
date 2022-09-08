@@ -13,6 +13,9 @@ use labels::Label;
 mod brick;
 use brick::Brick;
 
+mod powers;
+use powers::Power;
+
 mod ball;
 use ball::Ball;
 
@@ -24,7 +27,11 @@ use functions::*;
 
 use macroquad::{prelude::*, audio::{play_sound, PlaySoundParams, stop_sound}};
 
+extern crate rand;
+
+
 const FRAME_INDENT:f32 = 25.0;
+const NUMBER_OF_BONUSES:i32 = 9;
 
 pub enum GameState {
     Game,
@@ -58,6 +65,7 @@ async fn main() {
     let mut ball = Ball::new(paddle.center_x(), paddle.y).await;
 
     let mut bricks: Vec<Brick> = Vec::new();
+    let mut powers: Vec<Power> = Vec::new();
 
     let level_label = Label::new("Level - ".to_string(), 40.0, 787.0, 50).await;
     let lives_label = Label::new("Lives - ".to_string(), 240.0, 787.0, 50).await;
@@ -142,6 +150,7 @@ async fn main() {
                 level.set_level(level.lvl_num).await;
                 paddle.kind = paddle::Kind::Normal;
                 level.bricks_amount = 0;
+                bricks.clear();
                 for i in 0..lvl.len() {
                     brick_y = brick_y + 20.0;
                     for j in lvl[i] {
@@ -155,6 +164,15 @@ async fn main() {
                     }
                     brick_x = FRAME_INDENT;
                 }
+
+                powers.clear();
+
+                // Set random bonuses
+                for _ in 0..=NUMBER_OF_BONUSES {
+                    let index = rand::random::<usize>() % bricks.len();
+                    bricks[index].brick_with_bonus = true;
+                }
+
                 play_sound(resources.level_start, PlaySoundParams {
                     looped: false,
                     volume: 3.0,
@@ -252,44 +270,42 @@ async fn main() {
                     if !brick.destroyed {
                         if let Some(_i) = ball.rect.intersect(brick.left_side) {
                             brick.destroyed = true;
-                            level.bricks_amount = level.bricks_amount - 1;
-                            game.update_game(score+1, lives);
                             ball.horizontal_dir = ball::HorizontalDir::Left;
-                            play_sound(resources.destroyed_block, PlaySoundParams {
-                                looped: false,
-                                volume: 3.0,
-                            });
                         } else 
                         if let Some(_i) = ball.rect.intersect(brick.right_side) {
                             brick.destroyed = true;
-                            level.bricks_amount = level.bricks_amount - 1;
-                            game.update_game(score+1, lives);
                             ball.horizontal_dir = ball::HorizontalDir::Right;
-                            play_sound(resources.destroyed_block, PlaySoundParams {
-                                looped: false,
-                                volume: 3.0,
-                            });
                         } else
                         if let Some(_i) = ball.rect.intersect(brick.up_side) {
                             brick.destroyed = true;
-                            level.bricks_amount = level.bricks_amount - 1;
-                            game.update_game(score+1, lives);
                             ball.vertical_dir = ball::VerticalDir::Up;
-                            play_sound(resources.destroyed_block, PlaySoundParams {
-                                looped: false,
-                                volume: 3.0,
-                            });
                         } else
                         if let Some(_i) = ball.rect.intersect(brick.down_side) {
                             brick.destroyed = true;
+                            ball.vertical_dir = ball::VerticalDir::Down;
+                        }
+
+                        if brick.destroyed {
                             level.bricks_amount = level.bricks_amount - 1;
                             game.update_game(score+1, lives);
-                            ball.vertical_dir = ball::VerticalDir::Down;
                             play_sound(resources.destroyed_block, PlaySoundParams {
                                 looped: false,
                                 volume: 3.0,
                             });
+                            if brick.brick_with_bonus {
+                                powers.push(
+                                    Power::new(brick.x, brick.y).await,
+                                );
+                            }
                         }
+                    }
+                }
+
+                for power in &mut powers {
+                    power.draw();
+
+                    if power.y > resources.frame_texture.height() - FRAME_INDENT {
+                        power.actual = false;
                     }
                 }
 

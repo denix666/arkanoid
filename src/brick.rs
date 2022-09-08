@@ -2,13 +2,14 @@ use macroquad::prelude::*;
 
 pub struct Brick {
     texture: Texture2D,
-    x: f32,
-    y: f32,
+    pub x: f32,
+    pub y: f32,
     pub left_side: Rect,
     pub right_side: Rect,
     pub up_side: Rect,
     pub down_side: Rect,
     pub destroyed: bool,
+    pub brick_with_bonus: bool,
 }
 
 impl Brick {
@@ -23,8 +24,13 @@ impl Brick {
             up_side: Rect::new(x, y, 50.0, 5.0),
             down_side: Rect::new(x, y+15.0, 50.0, 5.0),
             destroyed: false,
+            brick_with_bonus: false,
         }
     }
+
+    // pub fn set_it_as_bonus(&mut self) {
+    //     self.brick_with_bonus = true;
+    // }
 
     pub fn draw(&self) {
         if !self.destroyed {
