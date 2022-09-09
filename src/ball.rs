@@ -67,8 +67,6 @@ impl Ball {
         }
         self.rect.x = self.x+4.0;
         self.rect.y = self.y+4.0;
-        self.rect.w = 8.0;
-        self.rect.h = 8.0;
     }
 
     pub fn center_x(&mut self) -> f32 {

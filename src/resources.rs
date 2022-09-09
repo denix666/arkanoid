@@ -12,6 +12,7 @@ pub struct Resources {
     pub level_start: Sound,
     pub intro_music: Sound,
     pub game_over: Sound,
+    pub bonus: Sound,
 }
 
 impl Resources {
@@ -28,6 +29,7 @@ impl Resources {
             level_start: load_sound("assets/sounds/level_start.ogg").await.unwrap(),
             intro_music: load_sound("assets/sounds/intro.ogg").await.unwrap(),
             game_over: load_sound("assets/sounds/game_over.ogg").await.unwrap(),
+            bonus: load_sound("assets/sounds/bonus.ogg").await.unwrap(),
         }
     }
 }

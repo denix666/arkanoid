@@ -307,6 +307,34 @@ async fn main() {
                     if power.y > resources.frame_texture.height() - FRAME_INDENT {
                         power.actual = false;
                     }
+
+                    if power.actual {
+                        if let Some(_i) = power.rect.intersect(paddle.rect) {
+                            power.actual = false;
+
+                            if power.kind == "laser" {
+                                paddle.kind = paddle::Kind::Laser;
+                                game.update_game(score+5, lives);
+                            } else
+                            if power.kind == "catch" {
+                                paddle.kind = paddle::Kind::Catch;
+                                game.update_game(score+5, lives);
+                            } else
+                            if power.kind == "expand" {
+                                paddle.kind = paddle::Kind::Expand;
+                                game.update_game(score+5, lives);
+                            } else
+                            if power.kind == "life" {
+                                paddle.kind = paddle::Kind::Normal;
+                                game.update_game(score+5, lives+1);
+                            }
+
+                            play_sound(resources.bonus, PlaySoundParams {
+                                looped: false,
+                                volume: 3.0,
+                            });
+                        }
+                    }
                 }
 
                 if level.bricks_amount < 1 {
@@ -332,7 +360,7 @@ async fn main() {
                     paddle.kind = paddle::Kind::Laser;
                 }
                 if is_key_pressed(KeyCode::E) {
-                    paddle.kind = paddle::Kind::Expanded;
+                    paddle.kind = paddle::Kind::Expand;
                 }
                 if is_key_pressed(KeyCode::Q) {
                     bricks.clear();

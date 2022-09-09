@@ -5,7 +5,7 @@ const PLAYER_SPEED: f32 = 700.0;
 pub enum Kind {
     Normal,
     Catch,
-    Expanded,
+    Expand,
     Laser,
 }
 
@@ -17,6 +17,7 @@ pub struct Paddle {
     paddle_laser: Texture2D,
     paddle_expanded: Texture2D,
     pub kind: Kind,
+    pub rect: Rect,
 }
 
 impl Paddle {
@@ -29,6 +30,7 @@ impl Paddle {
             paddle_expanded: load_texture("assets/images/paddle_expanded.png").await.unwrap(),
             paddle_laser: load_texture("assets/images/paddle_laser.png").await.unwrap(),
             kind: Kind::Normal,
+            rect: Rect::new(screen_width()/2.0, screen_height() - 100.0, 76.0, 35.0),
         }
     }
 
@@ -44,7 +46,7 @@ impl Paddle {
             Kind::Catch => {
                 self.paddle_catch.width()
             },
-            Kind::Expanded => {
+            Kind::Expand => {
                 self.paddle_expanded.width()
             },
             Kind::Laser => {
@@ -74,24 +76,32 @@ impl Paddle {
             Kind::Normal => {
                 if self.x > screen_width() - 16.0 - self.paddle_normal.width() {
                     self.x = screen_width() - 16.0 - self.paddle_normal.width();
+                    self.rect.w = self.paddle_normal.width();
                 }
             },
             Kind::Catch => {
                 if self.x > screen_width() - 16.0 - self.paddle_catch.width() {
                     self.x = screen_width() - 16.0 - self.paddle_catch.width();
+                    self.rect.w = self.paddle_catch.width();
                 }
             },
-            Kind::Expanded => {
+            Kind::Expand => {
                 if self.x > screen_width() - 16.0 - self.paddle_expanded.width() {
                     self.x = screen_width() - 16.0 - self.paddle_expanded.width();
+                    self.rect.w = self.paddle_expanded.width();
                 }
             },
             Kind::Laser => {
                 if self.x > screen_width() - 16.0 - self.paddle_laser.width() {
                     self.x = screen_width() - 16.0 - self.paddle_laser.width();
+                    self.rect.w = self.paddle_laser.width();
                 }
             },
         }
+
+        self.rect.x = self.x;
+        self.rect.y = self.y;
+        self.rect.h = 35.0;
     }
 
     pub fn draw(&self) {
@@ -102,7 +112,7 @@ impl Paddle {
             Kind::Catch => {
                 draw_texture(self.paddle_catch, self.x, self.y, WHITE);
             },
-            Kind::Expanded => {
+            Kind::Expand => {
                 draw_texture(self.paddle_expanded, self.x, self.y, WHITE);
             },
             Kind::Laser => {

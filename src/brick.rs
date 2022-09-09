@@ -28,10 +28,6 @@ impl Brick {
         }
     }
 
-    // pub fn set_it_as_bonus(&mut self) {
-    //     self.brick_with_bonus = true;
-    // }
-
     pub fn draw(&self) {
         if !self.destroyed {
             draw_texture(self.texture, self.x, self.y, WHITE);

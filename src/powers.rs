@@ -13,6 +13,8 @@ pub struct Power {
     cur_frame: usize,
     update_interval: i32,
     pub actual: bool,
+    pub rect: Rect,
+    pub kind: String,
 }
 
 impl Power {
@@ -41,6 +43,8 @@ impl Power {
             cur_frame: 0,
             update_interval: 0,
             actual: true,
+            rect: Rect::new(x, y, 48.0, 56.0),
+            kind: powerup_type.to_string(),
         }
     }
 
@@ -59,10 +63,16 @@ impl Power {
         self.y += dt * POWER_SPEED;
     }
 
+    pub fn update(&mut self) {
+        self.rect.x = self.x;
+        self.rect.y = self.y;
+    }
+
     pub fn draw(&mut self) {
         if self.actual {
             self.update_position(get_frame_time());
             self.update_animation();
+            self.update();
             draw_texture(self.texture[self.cur_frame], self.x, self.y, WHITE);
         }
     }
