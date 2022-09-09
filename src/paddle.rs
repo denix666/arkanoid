@@ -1,12 +1,18 @@
 use macroquad::prelude::*;
 
 const PLAYER_SPEED: f32 = 700.0;
-
+const NUM_OF_FRAMES: usize = 8;
+const ANIMATION_SPEED: i32 = 4;
 pub enum Kind {
     Normal,
     Catch,
     Expand,
     Laser,
+}
+
+pub enum Status {
+    Playing,
+    Died,
 }
 
 pub struct Paddle {
@@ -16,12 +22,23 @@ pub struct Paddle {
     paddle_catch: Texture2D,
     paddle_laser: Texture2D,
     paddle_expanded: Texture2D,
+    update_interval: i32,
+    cur_frame: usize,
     pub kind: Kind,
     pub rect: Rect,
+    anim_texture: Vec<Texture2D>,
+    pub status: Status,
+    pub animation_completed: bool,
 }
 
 impl Paddle {
     pub async fn new() -> Self {
+        let mut sprites:Vec<Texture2D> = Vec::new();
+        for i in 1..=NUM_OF_FRAMES {
+            let path = format!("assets/paddle/paddle_explode_{}.png", i);
+            sprites.push(load_texture(&path).await.unwrap());
+        }
+
         Self {
             x: screen_width()/2.0, 
             y: screen_height() - 100.0, 
@@ -29,8 +46,13 @@ impl Paddle {
             paddle_catch: load_texture("assets/images/paddle_catch.png").await.unwrap(),
             paddle_expanded: load_texture("assets/images/paddle_expanded.png").await.unwrap(),
             paddle_laser: load_texture("assets/images/paddle_laser.png").await.unwrap(),
+            update_interval: 0,
+            cur_frame: 0,
             kind: Kind::Normal,
             rect: Rect::new(screen_width()/2.0, screen_height() - 100.0, 76.0, 35.0),
+            anim_texture: sprites,
+            status: Status::Playing,
+            animation_completed: false,
         }
     }
 
@@ -104,19 +126,41 @@ impl Paddle {
         self.rect.h = 35.0;
     }
 
-    pub fn draw(&self) {
-        match self.kind {
-            Kind::Normal => {
-                draw_texture(self.paddle_normal, self.x, self.y, WHITE);
+    pub fn show_die_animation(&mut self) {
+        if !self.animation_completed {
+            draw_texture(self.anim_texture[self.cur_frame], self.x, self.y, WHITE);
+            self.update_interval += 1;
+            if self.update_interval > ANIMATION_SPEED {
+                self.update_interval = 0;
+                self.cur_frame += 1;
+                if self.cur_frame == self.anim_texture.len() {
+                    self.cur_frame = 0;
+                    self.animation_completed = true;
+                }
+            }
+        }
+    }
+
+    pub fn draw(&mut self) {
+        match self.status {
+            Status::Playing => {
+                match self.kind {
+                    Kind::Normal => {
+                        draw_texture(self.paddle_normal, self.x, self.y, WHITE);
+                    },
+                    Kind::Catch => {
+                        draw_texture(self.paddle_catch, self.x, self.y, WHITE);
+                    },
+                    Kind::Expand => {
+                        draw_texture(self.paddle_expanded, self.x, self.y, WHITE);
+                    },
+                    Kind::Laser => {
+                        draw_texture(self.paddle_laser, self.x, self.y, WHITE);
+                    },
+                }
             },
-            Kind::Catch => {
-                draw_texture(self.paddle_catch, self.x, self.y, WHITE);
-            },
-            Kind::Expand => {
-                draw_texture(self.paddle_expanded, self.x, self.y, WHITE);
-            },
-            Kind::Laser => {
-                draw_texture(self.paddle_laser, self.x, self.y, WHITE);
+            Status::Died => {
+                self.show_die_animation();
             },
         }
     }

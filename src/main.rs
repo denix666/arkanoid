@@ -184,6 +184,8 @@ async fn main() {
 
             GameState::LevelFail => {
                 level.draw();
+                paddle.status = paddle::Status::Died;
+                paddle.draw();
                 draw_texture(resources.frame_texture, 0.0, 0.0, WHITE);
                 show_text(resources.font, "Level fail", "Press 'space' to continue...");
                 
@@ -198,6 +200,8 @@ async fn main() {
                         ball.x = paddle.center_x();
                         ball.y = paddle.y;
                         paddle.kind = paddle::Kind::Normal;
+                        paddle.status = paddle::Status::Playing;
+                        paddle.animation_completed = false;
                         ball.last_ball_time = get_time();
                         ball.released = false;
                     } else {
@@ -226,6 +230,8 @@ async fn main() {
                     ball.vertical_dir = ball::VerticalDir::Up;
                     paddle.x = screen_width()/2.0;
                     paddle.kind = paddle::Kind::Normal;
+                    paddle.status = paddle::Status::Playing;
+                    paddle.animation_completed = false;
                     ball.x = paddle.center_x();
                     ball.y = paddle.y;
                 }
