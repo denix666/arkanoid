@@ -43,7 +43,7 @@ impl Power {
             cur_frame: 0,
             update_interval: 0,
             actual: true,
-            rect: Rect::new(x, y, 48.0, 56.0),
+            rect: Rect::new(x, y, 38.0, 19.0),
             kind: powerup_type.to_string(),
         }
     }

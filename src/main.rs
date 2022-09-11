@@ -62,7 +62,7 @@ async fn main() {
     let mut level = Level::new().await;
     let mut paddle = Paddle::new().await;
     let mut game = Game::new().await;
-    let mut ball = Ball::new(paddle.center_x(), paddle.y).await;
+    let mut ball = Ball::new(paddle.center_x(), paddle.y-16.0).await;
 
     let mut bricks: Vec<Brick> = Vec::new();
     let mut powers: Vec<Power> = Vec::new();
@@ -113,7 +113,7 @@ async fn main() {
                     ball.vertical_dir = ball::VerticalDir::Up;
                     paddle.x = screen_width()/2.0;
                     ball.x = paddle.center_x();
-                    ball.y = paddle.y;
+                    ball.y = paddle.y-16.0;
                     paddle.kind = paddle::Kind::Normal;
                     game_state = GameState::InitLevel;
                 }
@@ -149,6 +149,7 @@ async fn main() {
 
                 level.set_level(level.lvl_num).await;
                 paddle.kind = paddle::Kind::Normal;
+                //paddle.update(get_frame_time());
                 level.bricks_amount = 0;
                 bricks.clear();
                 for i in 0..lvl.len() {
@@ -198,12 +199,13 @@ async fn main() {
                         ball.vertical_dir = ball::VerticalDir::Up;
                         paddle.x = screen_width()/2.0;
                         ball.x = paddle.center_x();
-                        ball.y = paddle.y;
+                        ball.y = paddle.y-16.0;
                         paddle.kind = paddle::Kind::Normal;
                         paddle.status = paddle::Status::Playing;
-                        paddle.animation_completed = false;
+                        paddle.explode_animation_completed = false;
                         ball.last_ball_time = get_time();
                         ball.released = false;
+                        powers.clear();
                     } else {
                         game_state = GameState::GameOver;
                         play_sound(resources.game_over, PlaySoundParams {
@@ -231,9 +233,9 @@ async fn main() {
                     paddle.x = screen_width()/2.0;
                     paddle.kind = paddle::Kind::Normal;
                     paddle.status = paddle::Status::Playing;
-                    paddle.animation_completed = false;
+                    paddle.explode_animation_completed = false;
                     ball.x = paddle.center_x();
-                    ball.y = paddle.y;
+                    ball.y = paddle.y-16.0;
                 }
             }
 
@@ -315,7 +317,7 @@ async fn main() {
                     }
 
                     if power.actual {
-                        if let Some(_i) = power.rect.intersect(paddle.rect) {
+                        if let Some(_i) = paddle.rect.intersect(power.rect) {
                             power.actual = false;
 
                             if power.kind == "laser" {
@@ -370,6 +372,7 @@ async fn main() {
                 }
                 if is_key_pressed(KeyCode::Q) {
                     bricks.clear();
+                    powers.clear();
                     level.lvl_num = level.lvl_num + 1;
                     level.set_level(level.lvl_num).await;
                     game_state = GameState::InitLevel;
@@ -407,7 +410,7 @@ async fn main() {
                         }
                     },
                     ball::VerticalDir::Down => {
-                        if ball.center_x() < paddle.x + paddle.width() && ball.center_x() > paddle.x && ball.y > paddle.y {
+                        if ball.center_x() < paddle.x + paddle.width() && ball.center_x() > paddle.x && ball.y > paddle.y-16.0 {
                             ball.vertical_dir = ball::VerticalDir::Up;
                             // Left part of paddle
                             if ball.center_x() >= paddle.x && ball.center_x() <= paddle.x + paddle.width() / 3.0 {
@@ -431,7 +434,7 @@ async fn main() {
                                 paddle::Kind::Catch => {
                                     ball.last_ball_time=get_time();
                                     ball.released=false;
-                                    ball.y = paddle.y;
+                                    ball.y = paddle.y-16.0;
                                 }
                                 _ => {},
                             }
