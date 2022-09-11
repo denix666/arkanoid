@@ -10,6 +10,9 @@ use game::Game;
 mod labels;
 use labels::Label;
 
+mod bullet;
+use bullet::Bullet;
+
 mod brick;
 use brick::Brick;
 
@@ -63,10 +66,9 @@ async fn main() {
     let mut paddle = Paddle::new().await;
     let mut game = Game::new().await;
     let mut ball = Ball::new(paddle.center_x(), paddle.y-16.0).await;
-
     let mut bricks: Vec<Brick> = Vec::new();
     let mut powers: Vec<Power> = Vec::new();
-
+    let mut bullets: Vec<Bullet> = Vec::new();
     let level_label = Label::new("Level - ".to_string(), 40.0, 787.0, 50).await;
     let lives_label = Label::new("Lives - ".to_string(), 240.0, 787.0, 50).await;
     let score_label = Label::new("Score - ".to_string(), 440.0, 787.0, 50).await;
@@ -149,7 +151,6 @@ async fn main() {
 
                 level.set_level(level.lvl_num).await;
                 paddle.kind = paddle::Kind::Normal;
-                //paddle.update(get_frame_time());
                 level.bricks_amount = 0;
                 bricks.clear();
                 for i in 0..lvl.len() {
@@ -167,6 +168,7 @@ async fn main() {
                 }
 
                 powers.clear();
+                bullets.clear();
 
                 // Set random bonuses
                 for _ in 0..=NUMBER_OF_BONUSES {
@@ -206,6 +208,7 @@ async fn main() {
                         ball.last_ball_time = get_time();
                         ball.released = false;
                         powers.clear();
+                        bullets.clear();
                     } else {
                         game_state = GameState::GameOver;
                         play_sound(resources.game_over, PlaySoundParams {
@@ -352,9 +355,48 @@ async fn main() {
                         game_state = GameState::LevelCompleted;
                     }
                 }
+
+                for bullet in &mut bullets {
+                    bullet.draw();
+
+                    if bullet.y < 0.0 + FRAME_INDENT {
+                        bullet.actual = false;
+                    }
+
+                    if bullet.actual {
+                        for brick in &mut bricks {
+                            if !brick.destroyed {
+                                if let Some(_i) = bullet.rect.intersect(brick.down_side) {
+                                    bullet.actual = false;
+                                    brick.destroyed = true;
+                                    level.bricks_amount = level.bricks_amount - 1;
+                                    if brick.brick_with_bonus {
+                                        powers.push(
+                                            Power::new(brick.x, brick.y).await,
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 
                 if is_key_pressed(KeyCode::Escape) {
                     game_state = GameState::Pause;
+                }
+
+                if is_key_pressed(KeyCode::Space) {
+                    match paddle.kind {
+                        paddle::Kind::Laser => {
+                            bullets.push(
+                                Bullet::new(paddle.x+5.0, paddle.y).await,
+                            );
+                            bullets.push(
+                                Bullet::new(paddle.x+paddle.width()-11.0, paddle.y).await,
+                            );
+                        },
+                        _ => {},
+                    }
                 }
                 
                 // For debug
@@ -373,6 +415,7 @@ async fn main() {
                 if is_key_pressed(KeyCode::Q) {
                     bricks.clear();
                     powers.clear();
+                    bullets.clear();
                     level.lvl_num = level.lvl_num + 1;
                     level.set_level(level.lvl_num).await;
                     game_state = GameState::InitLevel;
