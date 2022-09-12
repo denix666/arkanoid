@@ -355,7 +355,7 @@ async fn main() {
                             }
                             else
                             if power.kind == "slow" {
-                                game.update_game(score+5, lives+1);
+                                game.update_game(score+5, lives);
                                 if ball.speed > 60.0 {
                                     ball.speed -= 20.0;
                                 }

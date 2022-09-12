@@ -21,13 +21,12 @@ impl Power {
     pub async fn new(x:f32, y:f32) -> Self {
         let mut sprites:Vec<Texture2D> = Vec::new();
 
-        let powerup_type: &str = match rand::thread_rng().gen_range(0..=6) { 
+        let powerup_type: &str = match rand::thread_rng().gen_range(0..=5) { 
             0 => "laser",
             1 => "life",
             2 => "slow",
             3 => "catch",
             4 => "duplicate",
-            5 => "warp",
             _ => "expand",
         };
 
