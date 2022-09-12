@@ -1,7 +1,5 @@
 use macroquad::prelude::*;
 
-const BALL_SPEED: f32 = 60.0;
-
 pub enum HorizontalDir {
     Left,
     Right,
@@ -24,6 +22,7 @@ pub struct Ball {
     pub released: bool,
     pub last_ball_time: f64,
     pub idle_time: f64,
+    pub speed: f32,
 }
 
 impl Ball {
@@ -32,14 +31,15 @@ impl Ball {
             texture: load_texture("assets/images/ball.png").await.unwrap(),
             x,
             y,
-            ball_step_move_x: 5.0,
-            ball_step_move_y: 5.0,
+            ball_step_move_x: 1.0,
+            ball_step_move_y: 3.0,
             horizontal_dir: HorizontalDir::Right,
             vertical_dir: VerticalDir::Up,
             rect: Rect::new(x+4.0, y+4.0, 8.0, 8.0),
             released: false,
             last_ball_time: 0.0,
             idle_time: 3.0,
+            speed: 120.0,
         }
     }
 
@@ -47,22 +47,22 @@ impl Ball {
         match self.horizontal_dir {
             HorizontalDir::Left => {
                 let x = self.ball_step_move_x;
-                self.x -= x * dt * BALL_SPEED;
+                self.x -= x * dt * self.speed;
             },
             HorizontalDir::Right => {
                 let x = self.ball_step_move_x;
-                self.x += x * dt * BALL_SPEED;
+                self.x += x * dt * self.speed;
             },
         }
 
         match self.vertical_dir {
             VerticalDir::Up => {
-                let y = self.ball_step_move_x;
-                self.y -= y * dt * BALL_SPEED;
+                let y = self.ball_step_move_y;
+                self.y -= y * dt * self.speed;
             },
             VerticalDir::Down => {
                 let y = self.ball_step_move_y;
-                self.y += y * dt * BALL_SPEED;
+                self.y += y * dt * self.speed;
             },
         }
         self.rect.x = self.x+4.0;

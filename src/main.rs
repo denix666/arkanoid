@@ -35,6 +35,7 @@ extern crate rand;
 
 const FRAME_INDENT:f32 = 25.0;
 const NUMBER_OF_BONUSES:i32 = 9;
+const INIT_BALL_SPEED:f32 = 120.0;
 
 pub enum GameState {
     Game,
@@ -104,6 +105,8 @@ async fn main() {
                     level.lvl_num = 1;
                     game_state = GameState::Intro;
                 }
+                powers.clear();
+                bullets.clear();
             }
 
             GameState::LevelCompleted => {
@@ -119,6 +122,8 @@ async fn main() {
                     paddle.kind = paddle::Kind::Normal;
                     game_state = GameState::InitLevel;
                 }
+                powers.clear();
+                bullets.clear();
             }
 
             GameState::InitLevel => {
@@ -169,6 +174,8 @@ async fn main() {
 
                 powers.clear();
                 bullets.clear();
+                game.set_time(get_time());
+                ball.speed = INIT_BALL_SPEED;
 
                 // Set random bonuses
                 for _ in 0..=NUMBER_OF_BONUSES {
@@ -206,9 +213,11 @@ async fn main() {
                         paddle.status = paddle::Status::Playing;
                         paddle.explode_animation_completed = false;
                         ball.last_ball_time = get_time();
+                        ball.speed = INIT_BALL_SPEED;
                         ball.released = false;
                         powers.clear();
                         bullets.clear();
+                        game.set_time(get_time());
                     } else {
                         game_state = GameState::GameOver;
                         play_sound(resources.game_over, PlaySoundParams {
@@ -253,6 +262,11 @@ async fn main() {
 
             GameState::Game => {
                 paddle.update(get_frame_time());
+
+                if get_time() - game.time() >= 10.0 {
+                    game.set_time(get_time());
+                    ball.speed += 20.0;
+                }
                 
                 if get_time() - ball.last_ball_time >= ball.idle_time || is_key_pressed(KeyCode::Space) {
                     ball.released = true;
@@ -338,6 +352,13 @@ async fn main() {
                             if power.kind == "life" {
                                 paddle.kind = paddle::Kind::Normal;
                                 game.update_game(score+5, lives+1);
+                            }
+                            else
+                            if power.kind == "slow" {
+                                game.update_game(score+5, lives+1);
+                                if ball.speed > 60.0 {
+                                    ball.speed -= 20.0;
+                                }
                             }
 
                             play_sound(resources.bonus, PlaySoundParams {
@@ -457,17 +478,17 @@ async fn main() {
                             ball.vertical_dir = ball::VerticalDir::Up;
                             // Left part of paddle
                             if ball.center_x() >= paddle.x && ball.center_x() <= paddle.x + paddle.width() / 3.0 {
-                                ball.ball_step_move_x = 7.0;
+                                ball.ball_step_move_x = 2.0;
                                 ball.horizontal_dir = ball::HorizontalDir::Left;
                             }
                             // Right part of paddle
                             if ball.center_x() >= paddle.x + paddle.width() / 3.0 * 2.0 && ball.center_x() <= paddle.x + paddle.width() {
-                                ball.ball_step_move_x = 7.0;
+                                ball.ball_step_move_x = 2.0;
                                 ball.horizontal_dir = ball::HorizontalDir::Right;
                             }
                             // Center part of paddle
                             if ball.center_x() >= paddle.x + paddle.width() / 3.0 && ball.center_x() <= paddle.x + paddle.width() - paddle.width() / 3.0 {
-                                ball.ball_step_move_x = 5.0;
+                                ball.ball_step_move_x = 1.0;
                             }
                             play_sound(resources.paddle_hit, PlaySoundParams {
                                 looped: false,
