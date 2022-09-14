@@ -136,6 +136,7 @@ pub struct Level {
     texture: Texture2D,
     pub lvl_num: i32,
     pub bricks_amount: i32,
+    pub destroyed_bricks_amount: i32,
 }
 
 impl Level {
@@ -144,6 +145,7 @@ impl Level {
             texture: load_texture("assets/backgrounds/bg_1.png").await.unwrap(),
             lvl_num: 1,
             bricks_amount: 0,
+            destroyed_bricks_amount: 0,
         }
     }
 
