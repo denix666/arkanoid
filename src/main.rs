@@ -317,6 +317,24 @@ async fn main() {
                     brick.draw();
 
                     if !brick.destroyed {
+                        for enemy in &mut enemies {
+                            if !enemy.destroyed {
+                                if let Some(_i) = enemy.rect.intersect(brick.up_side) {
+                                    enemy.y -= 1.0;
+                                }
+                            }
+                            if !enemy.destroyed {
+                                if let Some(_i) = enemy.rect.intersect(brick.left_side) {
+                                    enemy.x -= 1.0;
+                                }
+                            }
+                            if !enemy.destroyed {
+                                if let Some(_i) = enemy.rect.intersect(brick.right_side) {
+                                    enemy.x += 1.0;
+                                }
+                            }
+                        }
+
                         if let Some(_i) = ball.rect.intersect(brick.left_side) {
                             brick.destroyed = true;
                             ball.horizontal_dir = ball::HorizontalDir::Left;
@@ -382,9 +400,7 @@ async fn main() {
                             else
                             if power.kind == "slow" {
                                 game.score += 5;
-                                if ball.speed > 60.0 {
-                                    ball.speed -= 20.0;
-                                }
+                                ball.speed = INIT_BALL_SPEED;
                             }
 
                             play_sound(resources.bonus, PlaySoundParams {
@@ -502,6 +518,7 @@ async fn main() {
                         if enemy.x > paddle.x && !enemy.destroyed {
                             enemy.x -= 1.0;
                         }
+
                         if let Some(_i) = enemy.rect.intersect(paddle.rect) {
                             enemy.destroyed = true;
                         }
