@@ -417,6 +417,7 @@ async fn main() {
                                     bullet.actual = false;
                                     brick.destroyed = true;
                                     level.bricks_amount = level.bricks_amount - 1;
+                                    level.destroyed_bricks_amount += 1;
                                     if brick.brick_with_bonus {
                                         powers.push(
                                             Power::new(brick.x, brick.y).await,
@@ -492,20 +493,38 @@ async fn main() {
                 }
                 for enemy in &mut enemies {
                     if get_time() - enemy.burn_time >= 1.0 {
-                        if enemy.y < paddle.y {
+                        if enemy.y < paddle.y && !enemy.destroyed {
                             enemy.y += 1.0;
                         }
-                        if enemy.x < paddle.x {
+                        if enemy.x < paddle.x && !enemy.destroyed {
                             enemy.x += 1.0;
                         } else 
-                        if enemy.x > paddle.x {
+                        if enemy.x > paddle.x && !enemy.destroyed {
                             enemy.x -= 1.0;
                         }
                         if let Some(_i) = enemy.rect.intersect(paddle.rect) {
                             enemy.destroyed = true;
                         }
-                        if let Some(_i) = enemy.rect.intersect(ball.rect) {
-                            enemy.destroyed = true;
+                        if !enemy.destroyed {
+                            if let Some(_i) = enemy.rect.intersect(ball.rect) {
+                                enemy.destroyed = true;
+                                match ball.horizontal_dir {
+                                    ball::HorizontalDir::Left => {ball.horizontal_dir = ball::HorizontalDir::Right},
+                                    ball::HorizontalDir::Right => {ball.horizontal_dir = ball::HorizontalDir::Left},
+                                }
+                                match ball.vertical_dir {
+                                    ball::VerticalDir::Up => {ball.vertical_dir = ball::VerticalDir::Down},
+                                    ball::VerticalDir::Down => {ball.vertical_dir = ball::VerticalDir::Up},
+                                }
+                            }
+                        }
+                        for bullet in &mut bullets {
+                            if bullet.actual {
+                                if let Some(_i) = enemy.rect.intersect(bullet.rect) {
+                                    enemy.destroyed = true;
+                                    bullet.actual = false;
+                                }
+                            }
                         }
                         enemy.draw();
                     }
