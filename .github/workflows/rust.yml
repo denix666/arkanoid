@@ -26,20 +26,11 @@ jobs:
       run: |
         mv target/release/arkanoid arkanoid
         chmod 777 arkanoid
-      
-    - name: Archive artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: arkanoid
-        path: |
-          arkanoid
-          assets
-          
+        tar cpfz arkanoid.tar.gz arkanoid assets
+        
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
         draft: true
         prerelease: true
-        files: |
-          arkanoid
-          assets
+        files: arkanoid.tar.gz
