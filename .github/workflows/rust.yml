@@ -25,10 +25,9 @@ jobs:
       run: |
         mv target/release/arkanoid arkanoid
         chmod 777 arkanoid
-        version=`cat Cargo.toml | grep version | awk -F'"' '{print $2}'`
-        tar cpfz arkanoid-${version}.tar.gz arkanoid assets
+        tar cpfz arkanoid.tar.gz arkanoid assets
         
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
-        files: arkanoid-${version}.tar.gz
+        files: arkanoid.tar.gz
