@@ -34,3 +34,12 @@ jobs:
         path: |
           arkanoid
           assets
+          
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      with:
+        draft: true
+        prerelease: true
+        files: |
+          arkanoid
+          assets
