@@ -37,11 +37,12 @@ use functions::*;
 use macroquad::{prelude::*, audio::{play_sound, PlaySoundParams, stop_sound}};
 
 extern crate rand;
-use rand::{Rng};
+use rand::Rng;
 
 const FRAME_INDENT:f32 = 28.0;
 const NUMBER_OF_BONUSES:i32 = 9;
 const INIT_BALL_SPEED:f32 = 120.0;
+const NUMBER_OF_LEVELS: i32 = 10;
 
 pub enum GameState {
     Game,
@@ -83,8 +84,6 @@ async fn main() {
     let mut door = Door::new().await;
     
     let resources = Resources::new().await;
-
-    let mut lvl;
 
     play_sound(resources.intro_music, PlaySoundParams {
         looped: true,
@@ -141,29 +140,21 @@ async fn main() {
                 let mut brick_x: f32 = FRAME_INDENT;
                 let mut brick_y: f32 = 0.0;
 
-                match level.lvl_num {
-                    1 => {
-                        lvl = LVL_1;
-                    }
-                    2 => {
-                        lvl = LVL_2;
-                    }
-                    3 => {
-                        lvl = LVL_3;
-                    }
-                    4 => {
-                        lvl = LVL_4;
-                    }
-                    5 => {
-                        lvl = LVL_5;
-                    }
-                    6 => {
-                        lvl = LVL_6;
-                    }
-                    _ => {
+                let lvl = match level.lvl_num {
+                    1  => LVL_1,
+                    2  => LVL_2,
+                    3  => LVL_3,
+                    4  => LVL_4,
+                    5  => LVL_5,
+                    6  => LVL_6,
+                    7  => LVL_7,
+                    8  => LVL_8,
+                    9  => LVL_9,
+                    10 => LVL_10,
+                    _  => {
                         panic!("no such level!")
                     }
-                }
+                };
 
                 level.set_level(level.lvl_num).await;
                 paddle.kind = paddle::Kind::Normal;
@@ -412,7 +403,7 @@ async fn main() {
                 }
 
                 if level.bricks_amount < 1 {
-                    if level.lvl_num == 6 {
+                    if level.lvl_num == NUMBER_OF_LEVELS {
                         game_state = GameState::GameCompleted;
                     } else {
                         game_state = GameState::LevelCompleted;

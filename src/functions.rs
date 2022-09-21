@@ -12,7 +12,7 @@ pub fn show_text(font: Font, header_text: &str, message_text: &str) {
         TextParams {
             font,
             font_size: 70,
-            color: BLACK,
+            color: WHITE,
             ..Default::default()
         },
     );
@@ -24,7 +24,7 @@ pub fn show_text(font: Font, header_text: &str, message_text: &str) {
         TextParams {
             font,
             font_size: 30,
-            color: BLACK,
+            color: WHITE,
             ..Default::default()
         },
     );
