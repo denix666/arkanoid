@@ -23,7 +23,7 @@ impl Bullet {
 
     pub fn update(&mut self, dt: f32) {
         self.y -= dt * BULLET_SPEED;
-        if self.y < 0.0 + 11.0 {
+        if self.y < 11.0 {
             self.destroyed = true;
         }
         self.rect.x = self.x;

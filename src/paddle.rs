@@ -80,6 +80,8 @@ impl Paddle {
 
         self.x += x_move * dt * PLAYER_SPEED;
 
+        self.x = mouse_position().0;
+
         if self.x < crate::resources::FRAME_INDENT {
             self.x = crate::resources::FRAME_INDENT;
         }
@@ -119,22 +121,22 @@ impl Paddle {
         self.rect.y = self.y;
     }
 
-    // pub fn center_x(&mut self) -> f32 {
-    //     match self.paddle_type {
-    //         PaddleType::Normal => {
-    //             self.x + self.paddle_normal[0].width() / 2.0
-    //         },
-    //         PaddleType::Catch => {
-    //             self.x + self.paddle_catch.width() / 2.0
-    //         },
-    //         PaddleType::Expand => {
-    //             self.x + self.paddle_wide[0].width() / 2.0
-    //         },
-    //         PaddleType::Laser => {
-    //             self.x + self.paddle_laser[0].width() / 2.0
-    //         },
-    //     }
-    // }
+    pub fn center_x(&mut self) -> f32 {
+        match self.paddle_type {
+            PaddleType::Normal => {
+                self.x + self.paddle_normal[0].width() / 2.0
+            },
+            PaddleType::Catch => {
+                self.x + self.paddle_catch.width() / 2.0
+            },
+            PaddleType::Expand => {
+                self.x + self.paddle_wide[0].width() / 2.0
+            },
+            PaddleType::Laser => {
+                self.x + self.paddle_laser[0].width() / 2.0
+            },
+        }
+    }
 
     pub fn width(&mut self) -> f32 {
         match self.paddle_type {

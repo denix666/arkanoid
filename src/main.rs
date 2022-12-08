@@ -17,6 +17,9 @@ use bricks::Brick;
 mod doors;
 use doors::Door;
 
+mod ball;
+use ball::Ball;
+
 mod powers;
 use powers::Power;
 
@@ -24,7 +27,7 @@ mod enemy;
 use enemy::Enemy;
 
 mod game;
-use game::*;
+use game::Game;
 
 mod paddle;
 use paddle::Paddle;
@@ -58,6 +61,13 @@ enum GameState {
     Game,
     Pause,
     LevelCompleted,
+    LevelFailed,
+}
+
+fn draw_info(game: &Game, resources: &Resources) {
+    draw_level_number(resources.font, game.lvl_num.to_string().as_str());
+    draw_lives(resources.font, game.lives.to_string().as_str());
+    draw_score(resources.font, game.score.to_string().as_str());
 }
 
 #[macroquad::main(window_conf)]
@@ -74,6 +84,10 @@ async fn main() {
     let mut explode_animations: Vec<ExplodeAnimation> = Vec::new();
     let mut bullets: Vec<Bullet> = Vec::new();
     let mut powers: Vec<Power> = Vec::new();
+    let mut balls: Vec<Ball> = Vec::new();
+
+    // Hide mouse cursor
+    show_mouse(false);
     
     loop {
         clear_background(BLACK);
@@ -90,6 +104,7 @@ async fn main() {
                 enemies.clear();
                 bullets.clear();
                 powers.clear();
+                balls.clear();
                 explode_animations.clear();
                 points = make_map_array(game.lvl_num);
                 game_state = GameState::Game;
@@ -104,13 +119,16 @@ async fn main() {
                     let index = rand::random::<usize>() % bricks.len();
                     bricks[index].brick_with_bonus = true;
                 }
+
+                balls.push(Ball::new(paddle.center_x(), paddle.y - 16.0).await);
+                balls[0].vertical_dir = ball::VerticalDir::Up;
             },
             GameState::Game => {
                 if is_key_pressed(KeyCode::Escape) {
                     game_state = GameState::Pause;
                 }
 
-                if is_key_pressed(KeyCode::Space) {
+                if is_key_pressed(KeyCode::Space) || is_mouse_button_pressed(MouseButton::Left) {
                     match paddle.paddle_type {
                         paddle::PaddleType::Laser => {
                             bullets.push(
@@ -140,6 +158,19 @@ async fn main() {
                     };
                 }
                 door.draw();
+
+                for ball in &mut balls {
+                    ball.update(get_frame_time());
+                    ball.draw();
+
+                    if let Some(_i) = ball.rect.intersect(paddle.rect) {
+                        ball.vertical_dir = ball::VerticalDir::Up;
+                        play_sound(resources.paddle_hit, PlaySoundParams {
+                            looped: false,
+                            volume: 0.3,
+                        });
+                    }
+                }
 
                 for animation in &mut die_animations {
                     animation.draw();
@@ -194,10 +225,23 @@ async fn main() {
 
                     if let Some(_i) = paddle.rect.intersect(power.rect) {
                         power.destroyed = true;
+                        game.score += 5;
                         play_sound(resources.bonus, PlaySoundParams {
                             looped: false,
                             volume: 0.2,
                         });
+                        match power.power_type.to_string().as_str() {
+                            "laser" => {paddle.paddle_type = paddle::PaddleType::Laser},
+                            "catch" => {paddle.paddle_type = paddle::PaddleType::Catch},
+                            "expand" => {paddle.paddle_type = paddle::PaddleType::Expand},
+                            "slow" => {paddle.paddle_type = paddle::PaddleType::Normal},
+                            "duplicate" => {paddle.paddle_type = paddle::PaddleType::Normal},
+                            "life" => {
+                                paddle.paddle_type = paddle::PaddleType::Normal;
+                                game.lives += 1;
+                            },
+                            _ => {},
+                        }
                         break;
                     }
                 }
@@ -244,9 +288,18 @@ async fn main() {
                     game_state = GameState::LevelCompleted;
                 }
 
-                draw_level_number(resources.font, game.lvl_num.to_string().as_str());
-                draw_lives(resources.font, game.lives.to_string().as_str());
-                draw_score(resources.font, game.score.to_string().as_str());
+                if balls.len() == 0 {
+                    die_animations.push(
+                        DieAnimation::new(paddle.x, paddle.y).await,
+                    );
+                    play_sound(resources.fail, PlaySoundParams {
+                        looped: false,
+                        volume: 0.3,
+                    });
+                    game_state = GameState::LevelFailed;
+                }
+
+                draw_info(&game, &resources);
 
                 // DEBUG
                 if is_key_pressed(KeyCode::C) {
@@ -269,25 +322,47 @@ async fn main() {
             },
             GameState::Pause => {
                 draw_map(&resources);
+                draw_info(&game, &resources);
                 door.draw();
                 show_text(resources.font, "PAUSED", "Press 'space' to continue...");
 
-                if is_key_pressed(KeyCode::Space) | is_key_pressed(KeyCode::Escape) {
+                if is_key_pressed(KeyCode::Space) || is_key_pressed(KeyCode::Escape) {
                     game_state = GameState::Game;
                 }
             },
             GameState::LevelCompleted => {
                 draw_map(&resources);
+                draw_info(&game, &resources);
                 door.draw();
                 show_text(resources.font, "Level completed!", "Press 'space' to continue...");
 
-                if is_key_pressed(KeyCode::Space) {
+                if is_key_pressed(KeyCode::Space) || is_mouse_button_pressed(MouseButton::Left) {
                     if game.lvl_num == resources::NUMBER_OF_LEVELS {
                         game.lvl_num = 1;
                     } else {
                         game.lvl_num += 1;
                     }
                     game_state = GameState::InitLevel;
+                }
+            },
+            GameState::LevelFailed => {
+                draw_map(&resources);
+                draw_info(&game, &resources);
+                door.draw();
+                enemies.clear();
+                powers.clear();
+                for brick in &mut bricks {
+                    brick.draw();
+                }
+                for animation in &mut die_animations {
+                    animation.draw();
+                }
+                show_text(resources.font, "Level failed", "Press 'space' to continue...");
+
+                if is_key_pressed(KeyCode::Space) || is_key_pressed(KeyCode::Escape) {
+                    game.lives -= 1;
+                    balls.push(Ball::new(paddle.center_x(), paddle.y - 16.0).await);
+                    game_state = GameState::Game;
                 }
             },
         };
@@ -317,6 +392,13 @@ async fn main() {
         match die_animations.iter().position(|x| x.destroyed == true) {
             Some(idx) => {
                 die_animations.remove(idx);
+            },
+            None => {},
+        };
+
+        match balls.iter().position(|x| x.destroyed == true) {
+            Some(idx) => {
+                balls.remove(idx);
             },
             None => {},
         };
