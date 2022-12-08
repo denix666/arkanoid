@@ -30,13 +30,13 @@ impl Door {
     pub async fn new() -> Self {
         let mut right_open_animation_sprites:Vec<Texture2D> = Vec::new();
         for i in 1..=9 { // Number of sprites in animation
-            let path = format!("assets/doors/right_{}.png", i);
+            let path = format!("assets/images/doors/right_{}.png", i);
             right_open_animation_sprites.push(load_texture(&path).await.unwrap());
         }
 
         let mut left_open_animation_sprites:Vec<Texture2D> = Vec::new();
         for i in 1..=9 { // Number of sprites in animation
-            let path = format!("assets/doors/left_{}.png", i);
+            let path = format!("assets/images/doors/left_{}.png", i);
             left_open_animation_sprites.push(load_texture(&path).await.unwrap());
         }
 
@@ -44,7 +44,7 @@ impl Door {
         let mut j = 10;
         for _ in 1..=9 { // Number of sprites in animation
             j -= 1;
-            let path = format!("assets/doors/right_{}.png", j);
+            let path = format!("assets/images/doors/right_{}.png", j);
             right_close_animation_sprites.push(load_texture(&path).await.unwrap());
         }
 
@@ -52,11 +52,11 @@ impl Door {
         let mut j = 10;
         for _ in 1..=9 { // Number of sprites in animation
             j -= 1;
-            let path = format!("assets/doors/left_{}.png", j);
+            let path = format!("assets/images/doors/left_{}.png", j);
             left_close_animation_sprites.push(load_texture(&path).await.unwrap());
         }
         Self {
-            x: 22.0,
+            x: 52.0,
             y: 0.0,
             cur_frame: 0,
             right_open_animation_texture: right_open_animation_sprites,

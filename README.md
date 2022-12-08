@@ -16,6 +16,4 @@ To run:
 cargo run
 ```
 ## Screenshot
-![intro](screenshots/intro.png)
-
-![gameplay1](screenshots/gameplay1.png)
+![gameplay1](screenshots/screenshot.png)

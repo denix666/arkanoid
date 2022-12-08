@@ -12,16 +12,16 @@ pub struct Power {
     texture: Vec<Texture2D>,
     cur_frame: usize,
     update_interval: i32,
-    pub actual: bool,
+    pub destroyed: bool,
     pub rect: Rect,
-    pub kind: String,
+    pub power_type: String,
 }
 
 impl Power {
     pub async fn new(x:f32, y:f32) -> Self {
         let mut sprites:Vec<Texture2D> = Vec::new();
 
-        let powerup_type: &str = match rand::thread_rng().gen_range(0..=5) { 
+        let p_type: &str = match rand::thread_rng().gen_range(0..=5) { 
             0 => "laser",
             1 => "life",
             2 => "slow",
@@ -31,7 +31,7 @@ impl Power {
         };
 
         for i in 1..=NUM_OF_FRAMES {
-            let path = format!("assets/powers/powerup_{}_{}.png",powerup_type, i);
+            let path = format!("assets/images/powers/powerup_{}_{}.png",p_type, i);
             sprites.push(load_texture(&path).await.unwrap());
         }
 
@@ -41,9 +41,9 @@ impl Power {
             texture: sprites,
             cur_frame: 0,
             update_interval: 0,
-            actual: true,
+            destroyed: false,
             rect: Rect::new(x, y, 38.0, 19.0),
-            kind: powerup_type.to_string(),
+            power_type: p_type.to_string(),
         }
     }
 
@@ -58,21 +58,17 @@ impl Power {
         }
     }
 
-    pub fn update_position(&mut self, dt: f32) {
+    pub fn update(&mut self, dt: f32) {
         self.y += dt * POWER_SPEED;
-    }
-
-    pub fn update(&mut self) {
+        if self.y > screen_height() - 60.0 {
+            self.destroyed = true;
+        }
         self.rect.x = self.x;
         self.rect.y = self.y;
     }
 
     pub fn draw(&mut self) {
-        if self.actual {
-            self.update_position(get_frame_time());
-            self.update_animation();
-            self.update();
-            draw_texture(self.texture[self.cur_frame], self.x, self.y, WHITE);
-        }
+        self.update_animation();
+        draw_texture(self.texture[self.cur_frame], self.x, self.y, WHITE);
     }
 }

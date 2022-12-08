@@ -6,7 +6,7 @@ pub struct Bullet {
     pub x: f32,
     pub y: f32,
     texture: Texture2D,
-    pub actual: bool,
+    pub destroyed: bool,
     pub rect: Rect,
 }
 
@@ -16,25 +16,21 @@ impl Bullet {
             x,
             y,
             texture: load_texture("assets/images/bullet.png").await.unwrap(),
-            actual: true,
+            destroyed: false,
             rect: Rect::new(x, y, 6.0, 11.0),
         }
     }
 
-    pub fn update_position(&mut self, dt: f32) {
+    pub fn update(&mut self, dt: f32) {
         self.y -= dt * BULLET_SPEED;
-    }
-
-    pub fn update(&mut self) {
+        if self.y < 0.0 + 11.0 {
+            self.destroyed = true;
+        }
         self.rect.x = self.x;
         self.rect.y = self.y;
     }
 
     pub fn draw(&mut self) {
-        if self.actual {
-            self.update_position(get_frame_time());
-            self.update();
-            draw_texture(self.texture, self.x, self.y, WHITE);
-        }
+        draw_texture(self.texture, self.x, self.y, WHITE);
     }
 }
