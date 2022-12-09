@@ -1,4 +1,4 @@
-use macroquad::{prelude::*, audio::{PlaySoundParams, play_sound}};
+use macroquad::{prelude::*, audio::{PlaySoundParams, play_sound, stop_sound}};
 extern crate rand;
 use rand::Rng;
 
@@ -30,7 +30,7 @@ mod game;
 use game::Game;
 
 mod paddle;
-use paddle::Paddle;
+use paddle::{Paddle, PaddleType};
 
 mod bullet;
 use bullet::Bullet;
@@ -62,6 +62,7 @@ enum GameState {
     Pause,
     LevelCompleted,
     LevelFailed,
+    GameOver,
 }
 
 fn draw_info(game: &Game, resources: &Resources) {
@@ -71,7 +72,6 @@ fn draw_info(game: &Game, resources: &Resources) {
 }
 
 fn get_percentage_rounded(x: f32, y: f32) -> i32 {
-    // Convert to rounded percentage string.
     let result = (x * 100.0) / y;
     return result.round() as i32
 }
@@ -92,15 +92,24 @@ async fn main() {
     let mut powers: Vec<Power> = Vec::new();
     let mut balls: Vec<Ball> = Vec::new();
 
+    play_sound(resources.intro_music, PlaySoundParams {
+        looped: true,
+        volume: 0.3,
+    });
+    
     loop {
         clear_background(BLACK);
         
         match game_state {
             GameState::Intro => {
-                game.score = 0;
-                game.lvl_num = 1;
-                game.lives = 2;
-                game_state = GameState::InitLevel;
+                draw_texture(resources.intro_texture, 0.0, 0.0, WHITE);
+                if is_key_pressed(KeyCode::Space) {
+                    game.score = 0;
+                    game.lvl_num = 1;
+                    game.lives = 2;
+                    game_state = GameState::InitLevel;
+                    stop_sound(resources.intro_music);
+                }
             },
             GameState::InitLevel => {
                 points.clear();
@@ -126,8 +135,19 @@ async fn main() {
                 balls.push(Ball::new(paddle.center_x(), paddle.y - 16.0).await);
                 balls[0].vertical_dir = ball::VerticalDir::Up;
                 balls[0].last_ball_time = get_time();
+                game.last_speed_increased = get_time();
+                game.balls_speed = resources::INIT_BALLS_SPEED;
+                play_sound(resources.level_start, PlaySoundParams {
+                    looped: false,
+                    volume: 0.3,
+                });
             },
             GameState::Game => {
+                // Increate speed every 10 seconds
+                if get_time() - game.last_speed_increased >= 10.0 {
+                    game.balls_speed += 10.0;
+                    game.last_speed_increased = get_time();
+                }
                 
                 if is_key_pressed(KeyCode::Escape) {
                     game_state = GameState::Pause;
@@ -172,10 +192,12 @@ async fn main() {
                 door.draw();
 
                 for ball in &mut balls {
+                    ball.speed = game.balls_speed;
                     if ball.released {
                         ball.update(get_frame_time(), &resources);
                     } else {
                         ball.x = paddle.center_x();
+                        ball.y = paddle.y - 16.0;
                         if get_time() - ball.last_ball_time >= ball.idle_time  ||
                            is_key_pressed(KeyCode::Space) || 
                            is_mouse_button_pressed(MouseButton::Left) {
@@ -186,11 +208,21 @@ async fn main() {
 
                     if let Some(_i) = ball.rect.intersect(paddle.rect) {
                         ball.vertical_dir = ball::VerticalDir::Up;
-                        play_sound(resources.paddle_hit, PlaySoundParams {
-                            looped: false,
-                            volume: 0.3,
-                        });
                         
+                        match paddle.paddle_type {
+                            PaddleType::Catch => {
+                                ball.last_ball_time = get_time();
+                                ball.released = false;
+                            },
+                            _ => {
+                                ball.released = true;
+                                play_sound(resources.paddle_hit, PlaySoundParams {
+                                    looped: false,
+                                    volume: 0.3,
+                                });
+                            }
+                        }
+
                         match get_percentage_rounded(ball.center_x() - paddle.x, paddle.width()) {
                             -20..=20 => {
                                 ball.ball_step_move_x = 3.0;
@@ -206,8 +238,6 @@ async fn main() {
                             _ => {}    
                         };
                         break;
-                        
-                        //println!("{}", pos);
                     }
 
                     for brick in &mut bricks {
@@ -330,8 +360,19 @@ async fn main() {
                             "laser" => {paddle.paddle_type = paddle::PaddleType::Laser},
                             "catch" => {paddle.paddle_type = paddle::PaddleType::Catch},
                             "expand" => {paddle.paddle_type = paddle::PaddleType::Expand},
-                            "slow" => {paddle.paddle_type = paddle::PaddleType::Normal},
-                            "duplicate" => {paddle.paddle_type = paddle::PaddleType::Normal},
+                            "slow" => {
+                                paddle.paddle_type = paddle::PaddleType::Normal;
+                                if game.balls_speed >= 60.0 {
+                                    game.balls_speed -= 40.0;
+                                }
+                            },
+                            "duplicate" => {
+                                paddle.paddle_type = paddle::PaddleType::Normal;
+                                balls.push(
+                                    Ball::new(balls[0].x, balls[0].y).await,
+                                );
+                                balls[0].vertical_dir = ball::VerticalDir::Up;
+                            },
                             "life" => {
                                 paddle.paddle_type = paddle::PaddleType::Normal;
                                 game.lives += 1;
@@ -392,21 +433,14 @@ async fn main() {
                         looped: false,
                         volume: 0.3,
                     });
-                    game_state = GameState::LevelFailed;
+                    if game.lives > 0 {
+                        game_state = GameState::LevelFailed;
+                    } else {
+                        game_state = GameState::GameOver;
+                    }
                 }
 
                 draw_info(&game, &resources);
-
-                // DEBUG
-                if is_key_pressed(KeyCode::C) {
-                    paddle.paddle_type = paddle::PaddleType::Catch;
-                }
-                if is_key_pressed(KeyCode::N) {
-                    paddle.paddle_type = paddle::PaddleType::Normal;
-                }
-                if is_key_pressed(KeyCode::L) {
-                    paddle.paddle_type = paddle::PaddleType::Laser;
-                }
             },
             GameState::Pause => {
                 set_cursor_grab(false);
@@ -461,7 +495,36 @@ async fn main() {
                     game.lives -= 1;
                     balls.push(Ball::new(paddle.center_x(), paddle.y - 16.0).await);
                     balls[0].last_ball_time = get_time();
+                    game.balls_speed = resources::INIT_BALLS_SPEED;
                     game_state = GameState::Game;
+                    play_sound(resources.level_start, PlaySoundParams {
+                        looped: false,
+                        volume: 0.3,
+                    });
+                }
+            },
+            GameState::GameOver => {
+                set_cursor_grab(false);
+                show_mouse(true);
+                draw_map(&resources);
+                draw_info(&game, &resources);
+                door.draw();
+                enemies.clear();
+                powers.clear();
+                bullets.clear();
+                balls.clear();
+                for brick in &mut bricks {
+                    brick.draw();
+                }
+                for animation in &mut die_animations {
+                    animation.draw();
+                }
+                show_text(resources.font, "Game Over", "Press 'space' to continue...");
+                if is_key_pressed(KeyCode::Space)  || is_mouse_button_pressed(MouseButton::Left) {
+                    game.score = 0;
+                    game.lvl_num = 1;
+                    game.lives = 2;
+                    game_state = GameState::InitLevel;
                 }
             },
         };

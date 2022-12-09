@@ -1,6 +1,6 @@
 use macroquad::{prelude::*, audio::{PlaySoundParams, play_sound}};
 
-use crate::resources::Resources;
+use crate::resources::{Resources, self};
 
 pub enum HorizontalDir {
     Left,
@@ -42,7 +42,7 @@ impl Ball {
             released: false,
             last_ball_time: 0.0,
             idle_time: 4.0,
-            speed: 120.0,
+            speed: resources::INIT_BALLS_SPEED,
             destroyed: false,
         }
     }
