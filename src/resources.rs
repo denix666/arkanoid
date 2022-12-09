@@ -16,6 +16,7 @@ pub struct Resources {
     pub explode: Sound,
     pub bonus: Sound,
     pub fail: Sound,
+    pub laser: Sound,
 }
 
 impl Resources {
@@ -30,6 +31,7 @@ impl Resources {
             explode: load_sound("assets/sounds/explode.ogg").await.unwrap(),
             bonus: load_sound("assets/sounds/bonus.ogg").await.unwrap(),
             fail: load_sound("assets/sounds/fail.ogg").await.unwrap(),
+            laser: load_sound("assets/sounds/laser.ogg").await.unwrap(),
         }
     }
 }

@@ -26,6 +26,7 @@ pub struct Paddle {
     paddle_normal: Vec<Texture2D>,
     paddle_normal_cur_frame: usize,
     paddle_normal_update_interval: i32,
+    prev_mouse_pos: f32,
 }
 
 impl Paddle {
@@ -64,6 +65,7 @@ impl Paddle {
             paddle_type: PaddleType::Normal,
             rect: Rect::new(0.0, 0.0, 0.0, 0.0),
             destroyed: false,
+            prev_mouse_pos: mouse_position().0,
         }
     }
 
@@ -80,7 +82,10 @@ impl Paddle {
 
         self.x += x_move * dt * PLAYER_SPEED;
 
-        self.x = mouse_position().0;
+        if mouse_position().0 != self.prev_mouse_pos {
+            self.x = mouse_position().0;
+            self.prev_mouse_pos = mouse_position().0;
+        }
 
         if self.x < crate::resources::FRAME_INDENT {
             self.x = crate::resources::FRAME_INDENT;

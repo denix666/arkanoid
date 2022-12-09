@@ -70,6 +70,12 @@ fn draw_info(game: &Game, resources: &Resources) {
     draw_score(resources.font, game.score.to_string().as_str());
 }
 
+fn get_percentage_rounded(x: f32, y: f32) -> i32 {
+    // Convert to rounded percentage string.
+    let result = (x * 100.0) / y;
+    return result.round() as i32
+}
+
 #[macroquad::main(window_conf)]
 async fn main() {
     let mut game_state = GameState::Intro;
@@ -86,9 +92,6 @@ async fn main() {
     let mut powers: Vec<Power> = Vec::new();
     let mut balls: Vec<Ball> = Vec::new();
 
-    // Hide mouse cursor
-    show_mouse(false);
-    
     loop {
         clear_background(BLACK);
         
@@ -122,11 +125,16 @@ async fn main() {
 
                 balls.push(Ball::new(paddle.center_x(), paddle.y - 16.0).await);
                 balls[0].vertical_dir = ball::VerticalDir::Up;
+                balls[0].last_ball_time = get_time();
             },
             GameState::Game => {
+                
                 if is_key_pressed(KeyCode::Escape) {
                     game_state = GameState::Pause;
                 }
+
+                set_cursor_grab(true);
+                show_mouse(false);
 
                 if is_key_pressed(KeyCode::Space) || is_mouse_button_pressed(MouseButton::Left) {
                     match paddle.paddle_type {
@@ -137,6 +145,10 @@ async fn main() {
                             bullets.push(
                                 Bullet::new(paddle.x+paddle.width()-11.0, paddle.y).await,
                             );
+                            play_sound(resources.laser, PlaySoundParams {
+                                looped: false,
+                                volume: 0.2,
+                            });
                         },
                         _ => {},
                     }
@@ -160,7 +172,16 @@ async fn main() {
                 door.draw();
 
                 for ball in &mut balls {
-                    ball.update(get_frame_time());
+                    if ball.released {
+                        ball.update(get_frame_time(), &resources);
+                    } else {
+                        ball.x = paddle.center_x();
+                        if get_time() - ball.last_ball_time >= ball.idle_time  ||
+                           is_key_pressed(KeyCode::Space) || 
+                           is_mouse_button_pressed(MouseButton::Left) {
+                            ball.released = true;
+                        }
+                    }
                     ball.draw();
 
                     if let Some(_i) = ball.rect.intersect(paddle.rect) {
@@ -169,6 +190,81 @@ async fn main() {
                             looped: false,
                             volume: 0.3,
                         });
+                        
+                        match get_percentage_rounded(ball.center_x() - paddle.x, paddle.width()) {
+                            -20..=20 => {
+                                ball.ball_step_move_x = 3.0;
+                                ball.horizontal_dir = ball::HorizontalDir::Left;
+                            },
+                            21..=40 => {ball.ball_step_move_x = 2.0},
+                            41..=70 => {ball.ball_step_move_x = 1.0},
+                            71..=80 => {ball.ball_step_move_x = 2.0},
+                            81..=120 => {
+                                ball.ball_step_move_x = 3.0;
+                                ball.horizontal_dir = ball::HorizontalDir::Right;
+                            },
+                            _ => {}    
+                        };
+                        break;
+                        
+                        //println!("{}", pos);
+                    }
+
+                    for brick in &mut bricks {
+                        if let Some(_i) = ball.rect.intersect(brick.rect) {
+                            if brick.power != 0 {
+                                brick.power -= 1;
+                            } else {
+                                brick.destroyed = true;
+                                if brick.brick_with_bonus {
+                                    powers.push(
+                                        Power::new(brick.x, brick.y).await,
+                                    );
+                                }
+                            }
+                            game.score += 10;
+                            play_sound(resources.brick_hit, PlaySoundParams {
+                                looped: false,
+                                volume: 0.3,
+                            });
+                            match ball.vertical_dir {
+                                ball::VerticalDir::Up => {
+                                    ball.vertical_dir = ball::VerticalDir::Down;
+                                },
+                                ball::VerticalDir::Down => {
+                                    ball.vertical_dir = ball::VerticalDir::Up;
+                                },
+                            };
+                        }
+                    }
+
+                    for enemy in &mut enemies {
+                        if let Some(_i) = ball.rect.intersect(enemy.rect) {
+                            enemy.destroyed = true;
+                            explode_animations.push(
+                                ExplodeAnimation::new(enemy.x, enemy.y).await,
+                            );
+                            play_sound(resources.explode, PlaySoundParams {
+                                looped: false,
+                                volume: 0.3,
+                            });
+                            match ball.horizontal_dir {
+                                ball::HorizontalDir::Left => {
+                                    ball.horizontal_dir = ball::HorizontalDir::Right;
+                                },
+                                ball::HorizontalDir::Right => {
+                                    ball.horizontal_dir = ball::HorizontalDir::Left;
+                                },
+                            };
+                            match ball.vertical_dir {
+                                ball::VerticalDir::Up => {
+                                    ball.vertical_dir = ball::VerticalDir::Down;
+                                },
+                                ball::VerticalDir::Down => {
+                                    ball.vertical_dir = ball::VerticalDir::Up;
+                                },
+                            };
+                        }
                     }
                 }
 
@@ -311,16 +407,10 @@ async fn main() {
                 if is_key_pressed(KeyCode::L) {
                     paddle.paddle_type = paddle::PaddleType::Laser;
                 }
-                if is_key_pressed(KeyCode::E) {
-                    paddle.paddle_type = paddle::PaddleType::Expand;
-                }
-                if is_key_pressed(KeyCode::D) {
-                    die_animations.push(
-                        DieAnimation::new(paddle.x, paddle.y).await,
-                    );
-                }
             },
             GameState::Pause => {
+                set_cursor_grab(false);
+                show_mouse(true);
                 draw_map(&resources);
                 draw_info(&game, &resources);
                 door.draw();
@@ -331,6 +421,8 @@ async fn main() {
                 }
             },
             GameState::LevelCompleted => {
+                set_cursor_grab(false);
+                show_mouse(true);
                 draw_map(&resources);
                 draw_info(&game, &resources);
                 door.draw();
@@ -346,11 +438,15 @@ async fn main() {
                 }
             },
             GameState::LevelFailed => {
+                set_cursor_grab(false);
+                show_mouse(true);
                 draw_map(&resources);
                 draw_info(&game, &resources);
                 door.draw();
                 enemies.clear();
                 powers.clear();
+                bullets.clear();
+                balls.clear();
                 for brick in &mut bricks {
                     brick.draw();
                 }
@@ -359,9 +455,12 @@ async fn main() {
                 }
                 show_text(resources.font, "Level failed", "Press 'space' to continue...");
 
-                if is_key_pressed(KeyCode::Space) || is_key_pressed(KeyCode::Escape) {
+                if is_key_pressed(KeyCode::Space) || is_mouse_button_pressed(MouseButton::Left) {
+                    paddle.x = screen_width() / 2.0 - paddle.width() / 2.0;
+                    paddle.paddle_type = paddle::PaddleType::Normal;
                     game.lives -= 1;
                     balls.push(Ball::new(paddle.center_x(), paddle.y - 16.0).await);
+                    balls[0].last_ball_time = get_time();
                     game_state = GameState::Game;
                 }
             },
