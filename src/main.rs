@@ -105,7 +105,7 @@ async fn main() {
                 draw_texture(resources.intro_texture, 0.0, 0.0, WHITE);
                 if is_key_pressed(KeyCode::Space) || is_mouse_button_pressed(MouseButton::Left) {
                     game.score = 0;
-                    game.lvl_num = 7;
+                    game.lvl_num = 1;
                     game.lives = 2;
                     game_state = GameState::InitLevel;
                     stop_sound(resources.intro_music);
@@ -151,10 +151,6 @@ async fn main() {
                 
                 if is_key_pressed(KeyCode::Escape) {
                     game_state = GameState::Pause;
-                }
-
-                if is_key_pressed(KeyCode::L) {
-                    paddle.paddle_type = paddle::PaddleType::Laser;
                 }
 
                 set_cursor_grab(true);
