@@ -103,9 +103,9 @@ async fn main() {
         match game_state {
             GameState::Intro => {
                 draw_texture(resources.intro_texture, 0.0, 0.0, WHITE);
-                if is_key_pressed(KeyCode::Space) {
+                if is_key_pressed(KeyCode::Space) || is_mouse_button_pressed(MouseButton::Left) {
                     game.score = 0;
-                    game.lvl_num = 1;
+                    game.lvl_num = 7;
                     game.lives = 2;
                     game_state = GameState::InitLevel;
                     stop_sound(resources.intro_music);
@@ -153,6 +153,10 @@ async fn main() {
                     game_state = GameState::Pause;
                 }
 
+                if is_key_pressed(KeyCode::L) {
+                    paddle.paddle_type = paddle::PaddleType::Laser;
+                }
+
                 set_cursor_grab(true);
                 show_mouse(false);
 
@@ -170,7 +174,11 @@ async fn main() {
                                 volume: 0.2,
                             });
                         },
-                        _ => {},
+                        _ => {
+                            for ball in &mut balls {
+                                ball.released = true;
+                            }
+                        },
                     }
                 }
 
@@ -198,9 +206,7 @@ async fn main() {
                     } else {
                         ball.x = paddle.center_x();
                         ball.y = paddle.y - 16.0;
-                        if get_time() - ball.last_ball_time >= ball.idle_time  ||
-                           is_key_pressed(KeyCode::Space) || 
-                           is_mouse_button_pressed(MouseButton::Left) {
+                        if get_time() - ball.last_ball_time >= ball.idle_time {
                             ball.released = true;
                         }
                     }
@@ -211,8 +217,14 @@ async fn main() {
                         
                         match paddle.paddle_type {
                             PaddleType::Catch => {
-                                ball.last_ball_time = get_time();
-                                ball.released = false;
+                                if ball.released {
+                                    play_sound(resources.freeze, PlaySoundParams {
+                                        looped: false,
+                                        volume: 0.3,
+                                    });
+                                    ball.last_ball_time = get_time();
+                                    ball.released = false;
+                                }
                             },
                             _ => {
                                 ball.released = true;
@@ -429,14 +441,18 @@ async fn main() {
                     die_animations.push(
                         DieAnimation::new(paddle.x, paddle.y).await,
                     );
-                    play_sound(resources.fail, PlaySoundParams {
-                        looped: false,
-                        volume: 0.3,
-                    });
                     if game.lives > 0 {
                         game_state = GameState::LevelFailed;
+                        play_sound(resources.fail, PlaySoundParams {
+                            looped: false,
+                            volume: 0.3,
+                        });
                     } else {
                         game_state = GameState::GameOver;
+                        play_sound(resources.game_over, PlaySoundParams {
+                            looped: false,
+                            volume: 0.3,
+                        });
                     }
                 }
 

@@ -1,6 +1,6 @@
 use macroquad::{prelude::*, audio::{load_sound, Sound}};
 
-pub const NUMBER_OF_LEVELS: i32 = 4;
+pub const NUMBER_OF_LEVELS: i32 = 11;
 pub const RES_WIDTH: i32 = 700;
 pub const RES_HEIGHT: i32 = 550;
 pub const FRAME_INDENT: f32 = 50.0;
@@ -20,6 +20,8 @@ pub struct Resources {
     pub laser: Sound,
     pub intro_music: Sound,
     pub level_start: Sound,
+    pub game_over: Sound,
+    pub freeze: Sound,
 }
 
 impl Resources {
@@ -37,6 +39,8 @@ impl Resources {
             laser: load_sound("assets/sounds/laser.ogg").await.unwrap(),
             intro_music: load_sound("assets/sounds/intro.ogg").await.unwrap(),
             level_start: load_sound("assets/sounds/level_start.ogg").await.unwrap(),
+            game_over: load_sound("assets/sounds/game_over.ogg").await.unwrap(),
+            freeze: load_sound("assets/sounds/freeze.ogg").await.unwrap(),
         }
     }
 }
