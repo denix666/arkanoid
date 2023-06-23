@@ -1,6 +1,4 @@
 use macroquad::{prelude::*, audio::{PlaySoundParams, play_sound, stop_sound}};
-extern crate rand;
-use rand::Rng;
 
 mod resources;
 use resources::Resources;
@@ -78,6 +76,8 @@ fn get_percentage_rounded(x: f32, y: f32) -> i32 {
 
 #[macroquad::main(window_conf)]
 async fn main() {
+    macroquad::rand::srand(macroquad::miniquad::date::now() as _);
+    
     let mut game_state = GameState::Intro;
     let mut game = Game::new().await;
     let mut paddle = Paddle::new().await;
@@ -128,7 +128,7 @@ async fn main() {
 
                 // Set random bonuses
                 for _ in 0..=resources::NUMBER_OF_BONUSES {
-                    let index = rand::random::<usize>() % bricks.len();
+                    let index = macroquad::rand::gen_range(0, bricks.len());
                     bricks[index].brick_with_bonus = true;
                 }
 
@@ -315,7 +315,7 @@ async fn main() {
                     if get_time() - game.last_enemy_burn_time >= 8.0 {
                         door.last_door_time = get_time();
                         game.last_enemy_burn_time = get_time();
-                        match rand::thread_rng().gen_range(0..=1) { 
+                        match macroquad::rand::gen_range(0, 2) { 
                             0 => {
                                 door.status = doors::Status::LeftOpen;
                                 enemies.push(

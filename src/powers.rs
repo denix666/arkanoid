@@ -1,6 +1,5 @@
 use macroquad::prelude::*;
-extern crate rand;
-use rand::{Rng};
+
 
 const POWER_SPEED: f32 = 90.0;
 const NUM_OF_FRAMES: usize = 8;
@@ -21,7 +20,7 @@ impl Power {
     pub async fn new(x:f32, y:f32) -> Self {
         let mut sprites:Vec<Texture2D> = Vec::new();
 
-        let p_type: &str = match rand::thread_rng().gen_range(0..=5) { 
+        let p_type: &str = match macroquad::rand::gen_range(0, 6) { 
             0 => "laser",
             1 => "life",
             2 => "slow",

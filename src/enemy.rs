@@ -1,6 +1,4 @@
 use macroquad::prelude::*;
-extern crate rand;
-use rand::{Rng};
 
 const ANIMATION_SPEED: i32 = 8;
 
@@ -19,7 +17,7 @@ impl Enemy {
     pub async fn new(x:f32, y:f32) -> Self {
         let mut sprites:Vec<Texture2D> = Vec::new();
 
-        let enemy_type: &str = match rand::thread_rng().gen_range(0..=3) { 
+        let enemy_type: &str = match macroquad::rand::gen_range(0, 3) { 
             0 => "cone",
             1 => "cube",
             2 => "molecule",
